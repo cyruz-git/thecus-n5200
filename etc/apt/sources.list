@@ -1,0 +1,11 @@
+# wheezy repository
+deb http://mirror.switch.ch/ftp/mirror/debian/ wheezy main contrib non-free
+deb http://mirror.switch.ch/ftp/mirror/debian/ wheezy-updates main contrib non-free
+deb http://security.debian.org/ wheezy/updates main contrib non-free
+
+# backports
+deb http://mirror.switch.ch/ftp/mirror/debian/ wheezy-backports main contrib non-free
+deb http://mirror.switch.ch/ftp/mirror/debian/ wheezy-backports-sloppy main contrib non-free
+
+# testing sources for updated packages
+deb-src http://mirror.switch.ch/ftp/mirror/debian/ testing main contrib non-free

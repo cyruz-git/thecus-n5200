@@ -1,0 +1,1 @@
+cmd_/root/ICH4_GPIO/ICH4_GPIO.ko := ld -r -m elf_i386 -T /usr/src/linux-headers-3.2.0-4-common/scripts/module-common.lds --build-id  -o /root/ICH4_GPIO/ICH4_GPIO.ko /root/ICH4_GPIO/ICH4_GPIO.o /root/ICH4_GPIO/ICH4_GPIO.mod.o

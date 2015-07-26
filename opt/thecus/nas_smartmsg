@@ -1,0 +1,18 @@
+#!/bin/bash
+# Run by smartd daemon.
+# It notifies the user of the failure by mail, wall and led.
+# --------------------------------
+# cyruz - http://ciroprincipe.info
+
+LED_MNGR=/opt/thecus/nas_led
+
+# Turn on fail led if ICH4_GPIO module is loaded.
+[[ -f /proc/thecus_io ]] && $LED_MNGR fail
+
+# Notify by mail.
+echo "$SMARTD_MESSAGE" | mail -s "$SMARTD_FAILTYPE" "$SMARTD_ADDRESS"
+
+# Notify user.
+echo "$SMARTD_MESSAGE" | wall
+
+exit 0

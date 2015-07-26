@@ -1,0 +1,94 @@
+#!/bin/bash
+# This script manages the backup drive of the NAS:
+# 1. It starts the SMART test (short every day, long on saturday).
+# 2. It mounts the partition.
+# 3. It synchronizes the content of the storage disk to the backup disk.
+# 4. It unmounts the partition and put the drive to sleep.
+# --------------------------------
+# cyruz - http://ciroprincipe.info
+
+LOCK_FILE=/var/run/nas_backup
+BK_DISK_ID=/dev/disk/by-id/ata-WDC_WD40EFRX-68WT0N0_WD-WCC4E2UUVFRS
+BK_DISK_PART=/dev/disk/by-id/ata-WDC_WD40EFRX-68WT0N0_WD-WCC4E2UUVFRS-part1
+BK_DISK_PART_FS=ext4
+BK_DISK_PART_MOUNT=/mnt/disk_2
+ST_DISK_PART_MOUNT=/mnt/disk_1
+RSYNC_LOG_FILE=/var/log/nas_backup.log
+LED_MNGR=/opt/thecus/nas_led
+
+# This is a cleanup function executed when catching the SIGTERM signal.
+exitgracefully() {
+	ERROR="nas_backup :: caught SIGTERM"
+	if [[ -n "$RSYNC_PID" ]]; then
+		kill -SIGINT $RSYNC_PID
+		ERROR=$ERROR" - rsync terminated"
+	fi
+	if [[ $(cat /proc/mounts | grep "$BK_DISK_PART_MOUNT") ]]; then
+		umount $BK_DISK_PART
+		ERROR=$ERROR" - drive unmounted"
+	fi
+	if [[ $(smartctl -c $BK_DISK_ID | grep "Self-test routine in progress") ]]; then
+		smartctl -X $BK_DISK_ID
+		sleep 1s
+		ERROR=$ERROR" - SMART test aborted"
+	fi
+	hdparm -Y $BK_DISK_ID
+	logger "$ERROR"
+	[[ -f /proc/thecus_io ]] && $LED_MNGR copy
+	rm -f $LOCK_FILE
+	exit 1
+}
+
+# Required tools check.
+for i in smartctl hdparm
+do
+	type $i >/dev/null 2>&1 || { logger -s "nas_backup :: $i not installed, aborting."; exit 1; }
+done
+
+# Check if the script is already running (maybe a sync is already going on).
+if [[ -f $LOCK_FILE ]]; then
+	logger -s "nas_backup :: script already running, exiting."
+	exit 1
+fi
+
+# Set trap on SIGTERM before starting operations.
+trap exitgracefully SIGTERM
+
+# Create lockfile with script's pid.
+echo $$ > $LOCK_FILE
+
+# Turn on the copy led, if ICH4_GPIO module is loaded.
+[[ -f /proc/thecus_io ]] && $LED_MNGR copy
+
+# Start a SMART test (short everyday and long on saturday).
+# The smartd daemon must be set to notify in case of failure.
+[[ $(date +%a) == "Sat" ]] && TEST=long || TEST=short
+logger -s "nas_backup :: start $TEST SMART test on the backup drive..."
+smartctl -t $TEST $BK_DISK_ID
+sleep 1s
+
+logger -s "nas_backup :: waiting for the SMART test to terminate..."
+while [[ $(smartctl -c $BK_DISK_ID | grep "Self-test routine in progress") ]]; do
+	# Sleep in background and wait to trap signals.
+	sleep 5m & wait
+done
+
+logger -s "nas_backup :: mounting backup partition and starting synchronizing..."
+mount -t $BK_DISK_PART_FS $BK_DISK_PART $BK_DISK_PART_MOUNT
+cd $ST_DISK_PART_MOUNT
+rsync -XARa --exclude=lost+found --log-file=$RSYNC_LOG_FILE ./* $BK_DISK_PART_MOUNT &
+
+# We started rsync in background so we save its pid and wait to trap signals.
+RSYNC_PID=$!
+wait
+
+logger -s "nas_backup :: unmounting backup partition and putting the drive to sleep..."
+umount $BK_DISK_PART
+hdparm -Y $BK_DISK_ID
+
+# Turn off the copy led, if ICH4_GPIO module is loaded.
+[[ -f /proc/thecus_io ]] && $LED_MNGR copy
+
+# Remove lockfile.
+rm -f $LOCK_FILE
+

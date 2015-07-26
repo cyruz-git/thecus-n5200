@@ -1,0 +1,2 @@
+/root/ICH4_GPIO/ICH4_GPIO.ko
+/root/ICH4_GPIO/ICH4_GPIO.o

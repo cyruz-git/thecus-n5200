@@ -1,0 +1,56 @@
+#!/bin/bash
+# This script tries to manage the LCD of the Thecus N5200.
+# Require ICH4_GPIO kernel module and the uartpkt2 tool.
+#
+# Script's parameter must the be string to be shown (<= 20 char).
+#
+# Please notice that everytime you reset the LCD it shows the "Self test" and 
+# "Self testing..." strings. From the test I did, it is not possible to change 
+# the string without resetting the LCD, so it is advisable to use it only on boot.
+#
+# Thanks to: https://www.chaostreff.ch/Thecus_n5200_Debian
+# --------------------------------
+# cyruz - http://ciroprincipe.info
+
+UARTPKT2=/opt/thecus/uartpkt2
+
+fillmsg() {
+    unset FILL
+    unset LENGTH
+    LENGTH=`echo $1 | wc -m`
+    FILL=`echo $2-$LENGTH | bc`
+    for i in `seq 0 $FILL`; do echo -n " "; done
+}
+
+# These are formatting/command options to be used when sending strings to the LCD.
+# It's actually the only known way to make the LCD show something. 
+# ---
+PREFIX="\2\1\0U\31"
+SUFFIX="\0$(fillmsg "" 19)\0\0$(fillmsg "" 20)\000$(fillmsg "" 20)\0\3"
+# ---
+
+if [[ ! -f /proc/thecus_io ]]; then
+	echo "Please install the ICH4_GPIO module!"
+	exit 1
+fi
+
+if [[ "$#" -lt 1 || ("$#" -eq 2 && "$2" != "init") || "$#" -gt 2 ]]; then
+	echo -e "Usage: nas_lcd 'STRING TO BE SHOWN' \
+			\nThe string must be <= 20 chars, exceeding chars will be trimmed"
+	exit 1
+fi
+
+# Prepare the string
+TRIMMED=${1:0:20}
+STRING=$PREFIX$TRIMMED$(fillmsg "$TRIMMED" 20)$SUFFIX
+
+echo "uP_reset 0" > /proc/thecus_io
+sleep 1
+echo "uP_reset 1" > /proc/thecus_io
+sleep 3
+
+$UARTPKT2 HEARTBT >/dev/null 2>&1 &
+sleep 3
+pkill uartpkt2
+printf "$STRING" > /dev/ttyS1
+

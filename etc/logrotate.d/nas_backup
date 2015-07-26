@@ -1,0 +1,10 @@
+/var/log/nas_backup.log
+{
+	rotate 4
+	daily
+	missingok
+	notifempty
+	delaycompress
+	compress
+	create 0644 root root
+}

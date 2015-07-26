@@ -1,0 +1,34 @@
+#!/bin/bash
+# This script tries to manage Thecus N5200's main leds.
+# Require ICH4_GPIO kernel module.
+#
+# It accepts 1 parameter that can be "busy", "copy" or "fail"
+# and toggles the corresponding led exporting its state.
+#
+# Thanks to: https://www.chaostreff.ch/Thecus_n5200_Debian
+# --------------------------------
+# cyruz - http://ciroprincipe.info
+
+if [[ ! -f /proc/thecus_io ]]; then
+	echo "Please install the ICH4_GPIO module!"
+	exit 1
+fi
+
+if [[ "$1" != "busy" && "$1" != "copy" && "$1" != "fail" ]]; then
+	echo "Usage: nas_led <busy | copy | fail>"
+	exit 1
+fi
+
+FILE="/var/run/thecus/led."$1
+[[ ! -d /var/run/thecus ]] && mkdir -p /var/run/thecus
+
+# Read file and invert its content or assume it = 1, because
+# the led starts as turned off (0) and it is toggled to on (1).
+[[ -f $FILE ]] && LED=$((1 - $(cat $FILE))) || LED=1
+
+# Send the command, capitalizing first letter.
+echo ${1^} $LED > /proc/thecus_io
+
+# Save led state.
+echo $LED > $FILE
+

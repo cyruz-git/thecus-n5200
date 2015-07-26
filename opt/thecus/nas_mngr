@@ -1,0 +1,36 @@
+#!/bin/bash
+# This script tries to manage the Thecus N5200 known features.
+# It waits on the /proc/thecus_event to check for power/copy button event.
+# Require ICH4_GPIO kernel module.
+#
+# Thanks to: https://www.chaostreff.ch/Thecus_n5200_Debian
+# --------------------------------
+# cyruz - http://ciroprincipe.info
+
+LED_MNGR=/opt/thecus/nas_led
+LCD_MNGR=/opt/thecus/nas_lcd
+SYS_DOWN=/opt/thecus/nas_sysdown
+
+if [[ ! -f /proc/thecus_io ]]; then
+        echo "Please install the ICH4_GPIO module!"
+        exit 1
+fi
+
+$LCD_MNGR "CYRUS STORAGE BOX"
+
+while true; do
+	EVENT=$(cat /proc/thecus_event)
+	if [[ "$EVENT" == "button/power PWRF 0 0" ]]; then
+		logger -s "Power button pressed, shutting down the system..."
+		$LED_MNGR busy
+		$SYS_DOWN shutdown
+		break
+	elif [[ "$EVENT" == "Copy Button: ON" ]]; then
+		logger -s "Reset button pressed, rebooting the system..."
+		$LED_MNGR busy
+		$SYS_DOWN reboot
+		break
+	fi
+	sleep 2
+done
+

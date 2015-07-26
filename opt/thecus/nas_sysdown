@@ -1,0 +1,20 @@
+#!/bin/bash
+# This script shuts down or reboot the NAS.
+# It checks if important operations are going on before doing it.
+# --------------------------------
+# cyruz - http://ciroprincipe.info
+
+NAS_BACKUP_LOCK_FILE=/var/run/nas_backup
+
+if [[ "$1" != "shutdown" && "$1" != "reboot" ]]; then
+	echo "Usage: nas_sysdown <shutdown | reboot>"
+	exit 1
+fi
+
+# Check if the backup script is running.
+# If it is, try to terminate it gracefully.
+[[ -f $NAS_BACKUP_LOCK_FILE ]] && kill -SIGTERM $(cat $NAS_BACKUP_LOCK_FILE)
+
+# Shutdown or reboot.
+[[ "$1" == "shutdown" ]] && PARAM="-h" || PARAM="-r"
+shutdown $PARAM -t 0 now
