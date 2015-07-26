@@ -3,7 +3,13 @@
 # --------------------------------
 # cyruz - http://ciroprincipe.info
 
-### rsync check
+# root check
+if [[ $(id -u) -ne 0 ]]; then
+	echo "Please run this script as root!"
+	exit 1
+fi
+
+# rsync check
 type rsync > /dev/null 2>&1 || { echo >&2 "Error: rsync not installed. Aborting."; exit 1; }
 
 USR="cyrus"
