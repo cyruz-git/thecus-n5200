@@ -12,7 +12,7 @@ LED_MNGR=/opt/thecus/nas_led
 # Notify by mail.
 echo "$SMARTD_MESSAGE" | mail -s "$SMARTD_FAILTYPE" "$SMARTD_ADDRESS"
 
-# Notify user.
-echo "$SMARTD_MESSAGE" | wall
+# Notify user. COMMENTED, NOT WORKING.
+#echo "$SMARTD_MESSAGE" | wall
 
 exit 0
