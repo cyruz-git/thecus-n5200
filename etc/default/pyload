@@ -1,0 +1,11 @@
+# defaults for pyload
+# sourced by /etc/init.d/pyload
+
+# Change to 0 to disable daemon
+ENABLE_DAEMON=1
+
+# Configuration directory
+CONFIG_DIR="/mnt/disk_5/pyload/config" 
+
+# Default options for daemon
+OPTIONS="--configdir $CONFIG_DIR"
