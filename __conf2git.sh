@@ -35,6 +35,7 @@ SOURCEFILES="
 /etc/samba/smb.conf
 /mnt/disk_5/transmission/config/settings.json
 /mnt/disk_5/pyload/config/p*.conf
+/opt/bin/*
 /opt/thecus/*
 "
 DESTDIR="$HOMEDIR/thecus-n5200/"
