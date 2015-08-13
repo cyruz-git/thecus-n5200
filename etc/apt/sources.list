@@ -9,3 +9,6 @@ deb http://mirror.switch.ch/ftp/mirror/debian/ wheezy-backports-sloppy main cont
 
 # testing sources for updated packages
 deb-src http://mirror.switch.ch/ftp/mirror/debian/ testing main contrib non-free
+
+# Syncthing repository
+deb http://apt.syncthing.net/ syncthing release
