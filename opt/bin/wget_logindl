@@ -25,6 +25,19 @@ wget_get_cookie() {
 	wget --append-output $LOG_FILE --user-agent "$USER_AGENT" --save-cookies $COOKIE_FILE \
 		 --keep-session-cookies --post-data "$LOGIN_USR_ID=$LOGIN_USR&$LOGIN_PWD_ID=$LOGIN_PWD" \
 		 -O - "$LOGIN_PAGE" > /dev/null
+	return $?
+}
+
+wget_get_file() {
+	# The downloads will be instantiated in separated directories. If using the same directory
+	# wget will rename a file being downloaded to file.1 if a file with the same same has been
+	# downloaded previously. This can create problems in case the download of file.1 is interrupted
+	# because, when resuming it, wget will try to resume the previously downloaded file and not file.1.
+	# We append each output to the log file, using the dot:mega style to avoid cluttering.
+	wget --append-output $LOG_FILE --progress dot:mega --user-agent "$USER_AGENT" \
+		 --load-cookies $COOKIE_FILE --directory-prefix $DOWNLOAD_DIR --force-directories \
+		 --no-host-directories --cut-dirs 1 --continue "$URL"
+	return $?
 }
 
 if [[ $# -ne 1 ]]; then
@@ -83,14 +96,7 @@ while read URL; do
 			echo "Saving the cookie file..."
 			wget_get_cookie && sleep 2s
 			echo "Downloading <$URL>"
-			# The downloads will be instantiated in separated directories. If using the same directory
-			# wget will rename a file being downloaded to file.1 if a file with the same same has been
-			# downloaded previously. This can create problems in case the download of file.1 is interrupted
-			# because, when resuming it, wget will try to resume the previously downloaded file and not file.1.
-			# We append each output to the log file, using the dot:mega style to avoid cluttering.
-			wget --append-output $LOG_FILE --progress dot:mega --user-agent "$USER_AGENT" \
-				 --load-cookies $COOKIE_FILE --directory-prefix $DOWNLOAD_DIR --force-directories \
-				 --no-host-directories --cut-dirs 1 --continue "$URL"
+			wget_get_file
 			WGET_EXIT_CODE=$?
 		done
 	fi
