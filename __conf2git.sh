@@ -34,7 +34,7 @@ SOURCEFILES="
 /etc/rsyslog.d/smartd.conf
 /etc/samba/smb.conf
 /mnt/disk_5/transmission/config/settings.json
-/mnt/disk_5/pyload/config/p*.conf
+/mnt/disk_5/pyload/config/pyload.conf
 /opt/bin/*
 /opt/thecus/*
 "
