@@ -36,6 +36,7 @@ SOURCEFILES="
 /mnt/disk_5/transmission/config/settings.json
 /mnt/disk_5/pyload/config/pyload.conf
 /opt/bin/*
+/opt/build/update-*
 /opt/thecus/*
 "
 DESTDIR="$HOMEDIR/thecus-n5200/"
