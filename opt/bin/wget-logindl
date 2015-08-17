@@ -1,0 +1,98 @@
+#!/bin/bash
+# wget-logindl
+# --------------------------------
+# This script uses wget to download a list of url from a site that requires a login.
+# It logins to the site before each download, saves the cookie file and then restries 
+# the download until it's finished.
+#
+# It must be run passing a download file as parameter. The file must contain the following variables:
+#
+# DOWNLOAD_DIR = Directory where to save the downloaded files.
+# CONFIG_DIR   = Directory where to save cookies and logs.
+# COOKIE_FILE  = Cookie file path.
+# LOG_FILE     = Log file path.
+# USER_AGENT   = User agent string.
+# LOGIN_PAGE   = Page where to do the login with the POST data.
+# LOGIN_USR_ID = POST data user field.
+# LOGIN_PWD_ID = POST data password field.
+# LOGIN_USR    = POST data user value.
+# LOGIN_PWD    = POST data password value.
+# URL_LIST     = List of url to download. One per line.
+# --------------------------------
+# cyruz - http://ciroprincipe.info
+
+wget_get_cookie() {
+	wget --append-output $LOG_FILE --user-agent "$USER_AGENT" --save-cookies $COOKIE_FILE \
+		 --keep-session-cookies --post-data "$LOGIN_USR_ID=$LOGIN_USR&$LOGIN_PWD_ID=$LOGIN_PWD" \
+		 -O - "$LOGIN_PAGE" > /dev/null
+	return $?
+}
+
+wget_get_file() {
+	# The downloads will be instantiated in separated directories. If using the same directory
+	# wget will rename a file being downloaded to file.1 if a file with the same same has been
+	# downloaded previously. This can create problems in case the download of file.1 is interrupted
+	# because, when resuming it, wget will try to resume the previously downloaded file and not file.1.
+	# We append each output to the log file, using the dot:mega style to avoid cluttering.
+	wget --append-output $LOG_FILE --progress dot:mega --user-agent "$USER_AGENT" \
+		 --load-cookies $COOKIE_FILE --directory-prefix $DOWNLOAD_DIR --force-directories \
+		 --no-host-directories --cut-dirs 1 --continue "$URL"
+	return $?
+}
+
+[[ $# -ne 1 ]] && { echo "Usage: wget-logindl <path to the download file>"; exit 1; }
+[[ ! -f $1 ]]  && { echo "The download file doesn't exist."; exit 1; }
+type wget >/dev/null 2>&1 || { echo "Error: wget not installed. Aborting."; exit 1; }
+
+. $1 # Source the file to read the variables.
+
+[[ -z ${DOWNLOAD_DIR+x} ]] && ERROR=$ERROR" <DOWNLOAD_DIR>"
+[[ -z ${CONFIG_DIR+x} ]]   && ERROR=$ERROR" <CONFIG_DIR>"
+[[ -z ${COOKIE_FILE+x} ]]  && ERROR=$ERROR" <COOKIE_FILE>"
+[[ -z ${LOG_FILE+x} ]]     && ERROR=$ERROR" <LOG_FILE>"
+[[ -z ${USER_AGENT+x} ]]   && ERROR=$ERROR" <USER_AGENT>"
+[[ -z ${LOGIN_PAGE+x} ]]   && ERROR=$ERROR" <LOGIN_PAGE>"
+[[ -z ${LOGIN_USR_ID+x} ]] && ERROR=$ERROR" <LOGIN_USR_ID>"
+[[ -z ${LOGIN_PWD_ID+x} ]] && ERROR=$ERROR" <LOGIN_PWD_ID>"
+[[ -z ${LOGIN_USR+x} ]]    && ERROR=$ERROR" <LOGIN_USR>"
+[[ -z ${LOGIN_PWD+x} ]]    && ERROR=$ERROR" <LOGIN_PWD>"
+[[ -z ${URL_LIST+x} ]]     && ERROR=$ERROR" <URL_LIST>"
+if [[ ! -z ${ERROR+x} ]]; then
+	echo "The following variables are unset:$ERROR"
+	exit 1
+fi
+
+if [[ ! -d "$DOWNLOAD_DIR" ]]; then
+	mkdir -p $DOWNLOAD_DIR
+	if [[ $? -ne 0 ]]; then
+		echo "Cannot create the <DOWNLOAD_DIR> directory."
+		exit 1
+	fi
+	echo "Download directory created."
+fi
+
+if [[ ! -d "$CONFIG_DIR" ]]; then
+	mkdir -p $CONFIG_DIR
+	if [[ $? -ne 0 ]]; then
+		echo "Cannot create the <CONFIG_DIR> directory."
+		exit 1
+	fi
+	echo "Config directory created."
+fi
+
+# Delete old log file on start.
+[[ -f "$LOG_FILE" ]] && rm -f $LOG_FILE
+
+while read URL; do
+	if [[ $URL =~ https?:// ]]; then
+		WGET_EXIT_CODE=1
+		while [[ $WGET_EXIT_CODE -ne 0 ]]; do
+			echo "Saving the cookie file..."
+			wget_get_cookie && sleep 2s
+			echo "Downloading <$URL>"
+			wget_get_file
+			WGET_EXIT_CODE=$?
+		done
+	fi
+done <<< "$URL_LIST"
+
