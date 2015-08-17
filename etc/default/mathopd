@@ -1,0 +1,10 @@
+# Defaults for mathopd initscript
+# sourced by /etc/init.d/mathopd
+# installed at /etc/default/mathopd by the maintainer scripts
+
+#
+# This is a POSIX shell fragment
+#
+
+# Additional options that are passed to the Daemon.
+DAEMON_OPTS="-f /etc/mathopd.conf"

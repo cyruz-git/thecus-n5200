@@ -20,10 +20,13 @@ SOURCEFILES="
 /etc/fstab
 /etc/lilo.conf
 /etc/mailname
+/etc/mathopd.conf
 /etc/minidlna.conf
 /etc/smartd.conf
 /etc/sudoers
 /etc/apt/sources.list
+/etc/default/mathopd
+/etc/default/mini-httpd
 /etc/default/pyload
 /etc/default/smartmontools
 /etc/default/transmission-daemon
