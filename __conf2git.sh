@@ -15,6 +15,7 @@ type rsync > /dev/null 2>&1 || { echo >&2 "Error: rsync not installed. Aborting.
 USR="cyrus"
 HOMEDIR="/home/$USR"
 SOURCEFILES="
+/etc/aria2/*
 /etc/crontab
 /etc/fstab
 /etc/lilo.conf
@@ -26,6 +27,7 @@ SOURCEFILES="
 /etc/default/pyload
 /etc/default/smartmontools
 /etc/default/transmission-daemon
+/etc/init.d/aria2
 /etc/init.d/transmission-daemon
 /etc/init.d/pyload
 /etc/logrotate.d/nas_backup

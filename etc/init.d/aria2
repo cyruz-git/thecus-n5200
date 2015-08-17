@@ -1,0 +1,63 @@
+#!/bin/sh
+### BEGIN INIT INFO
+# Provides:				aria2
+# Required-Start:		$local_fs $remote_fs $network
+# Required-Stop:		$local_fs $remote_fs $network
+# Default-Start:		2 3 4 5
+# Default-Stop:			0 1 6
+# Short-Description:	aria2c init script.
+# Description:			Starts and stops aria2 daemon.
+### END INIT INFO
+
+DAEMON=/usr/bin/aria2c
+USER=aria2
+CONF=/etc/aria2/aria2.conf
+
+start() {
+	if [ -f $CONF ]; then
+		logger -st ARIA2C "Starting aria2c daemon..."
+		start-stop-daemon --start --chuid $USER --exec $DAEMON \
+		-- --daemon --enable-rpc --conf-path=$CONF
+	else
+		logger -st ARIA2C "Couldn't start aria2 daemon (no $CONF found)."
+	fi
+}
+
+stop() {
+	logger -st ARIA2C "Stopping aria2c daemon..."
+	start-stop-daemon --stop --quiet --exec $DAEMON
+}
+
+status() {
+	dbpid=$(pgrep -fu $USER $DAEMON)
+	if [ -z "$dbpid" ]; then
+		logger -st ARIA2C "aria2c daemon not running."
+	else
+		logger -st ARIA2C "aria2c daemon running."
+	fi
+}
+
+case "$1" in
+	start)
+		start
+		sleep 1
+		;;
+	stop)
+		stop
+		sleep 1
+		;;
+	restart)
+		stop
+		sleep 1
+		start
+		;;
+	status)
+		status
+		;;
+	*)
+		echo "Usage: {start|stop|restart|status}"
+		exit 1
+		;;
+esac
+
+exit 0
