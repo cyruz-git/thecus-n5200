@@ -1,0 +1,55 @@
+#!/bin/bash
+# lftp-mirror
+# --------------------------------
+# Mirror script for lftp. It mirrors a remote directory to a local one via SFTP.
+#
+# It must be run passing a configuration file as parameter The file must contain the following variables:
+#
+# USR  = Login username.
+# PWD  = Login password.
+# HOST = Remote host.
+# RDIR = Directory in the remote host, to be mirrored locally.
+# LDIR = Local directory receiving the mirror.
+# --------------------------------
+# cyruz - http://ciroprincipe.info
+
+[[ $# -ne 1 ]] && { echo "Usage: lftp-mirror <path to the configuration file>"; exit 1; }
+[[ ! -f $1 ]]  && { echo "The download file doesn't exist."; exit 1; }
+type lftp >/dev/null 2>&1 || { echo "Error: lftp not installed. Aborting."; exit 1; }
+
+. $1 # Source the file to read the variables.
+
+[[ -z ${USR+x} ]]     && ERROR=$ERROR" <USR>"
+[[ -z ${PWD+x} ]]     && ERROR=$ERROR" <PWD>"
+[[ -z ${HOST+x} ]]    && ERROR=$ERROR" <HOST>"
+[[ -z ${RDIR+x} ]]    && ERROR=$ERROR" <RDIR>"
+[[ -z ${LDIR+x} ]]    && ERROR=$ERROR" <LDIR>"
+[[ ! -z ${ERROR+x} ]] && { echo "The following variables are unset:$ERROR"; exit 1; }
+
+if [[ ! -d "$LDIR" ]]; then
+	mkdir -p $LDIR
+	if [[ $? -ne 0 ]]; then
+		echo "Cannot create the local directory."
+		exit 1
+	fi
+	echo "Local directory created."
+fi
+
+FNAME="$(basename "$0")"
+FLOCK="/tmp/$FNAME.lock"
+trap "rm -f $FLOCK; exit 0" SIGINT SIGTERM
+if [[ -e "$FLOCK" ]]; then
+    echo "$FNAME is running already."
+    exit
+else
+    touch "$FLOCK"
+    lftp -p 22 -u "$USR","$PWD" sftp://"$HOST" << EOF
+    set sftp:auto-confirm yes
+    set mirror:use-pget-n 5
+    mirror -c -P5 --log="$LDIR/$FNAME.log" "$RDIR" "$LDIR"
+    quit
+EOF
+    rm -f "$FLOCK"
+    trap - SIGINT SIGTERM
+    exit
+fi
