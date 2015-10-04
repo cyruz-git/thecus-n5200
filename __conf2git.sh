@@ -15,7 +15,7 @@ type rsync > /dev/null 2>&1 || { echo >&2 "Error: rsync not installed. Aborting.
 USR="cyrus"
 HOMEDIR="/home/$USR"
 SOURCEFILES="
-/etc/aria2/*
+/etc/aria2/
 /etc/crontab
 /etc/fstab
 /etc/lilo.conf
@@ -26,7 +26,6 @@ SOURCEFILES="
 /etc/sudoers
 /etc/apt/sources.list
 /etc/default/mathopd
-/etc/default/mini-httpd
 /etc/default/pyload
 /etc/default/smartmontools
 /etc/default/transmission-daemon
@@ -34,18 +33,18 @@ SOURCEFILES="
 /etc/init.d/transmission-daemon
 /etc/init.d/pyload
 /etc/logrotate.d/nas_backup
-/etc/nullmailer/*
+/etc/nullmailer/
 /etc/proftpd/proftpd.conf
 /etc/rsyslog.d/smartd.conf
 /etc/samba/smb.conf
 /mnt/disk_5/transmission/config/settings.json
 /mnt/disk_5/pyload/config/pyload.conf
-/opt/bin/*
+/opt/bin/
 /opt/build/update-*
-/opt/thecus/*
+/opt/thecus/
 "
 DESTDIR="$HOMEDIR/thecus-n5200/"
 
-rsync -RLav $SOURCEFILES $DESTDIR
+rsync -RLav --delete $SOURCEFILES $DESTDIR
 chown -R $USR:$USR $DESTDIR
 

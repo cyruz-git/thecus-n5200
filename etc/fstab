@@ -7,9 +7,9 @@
 # <file system> <mount point>   <type>  <options>       <dump>  <pass>
 
 # Root, boot and swap partitions (SWAP DISABLED BECAUSE ON A FLASH DRIVE).
-UUID=c6f9115a-2ada-44d4-8c39-cc9c5accefea /           ext4 errors=remount-ro 0 1
-UUID=44a32e03-2f45-41e6-9760-c5e5d6d7b0c1 /boot       ext4 defaults          0 2
-#UUID=0036186a-e3f0-43c7-b69f-1bf91d90da3b none        swap sw                0 0
+UUID=4325a4c4-2973-4b49-a289-e7a415503024 /           ext4 errors=remount-ro 0 1
+UUID=1016b24c-9b2c-4a6e-8986-85bccb80dddf /boot       ext4 defaults          0 2
+#UUID=d26539ef-c86a-475f-a804-0692bd5d2581 none        swap sw                0 0
 
 # Storage and backup disks (BACKUP DISABLED BECAUSE IT WILL BE MOUNTED BY BACKUP SCRIPT).
 UUID=19123761-2605-4037-99da-7353fa418e9b /mnt/disk_1 ext4 errors=remount-ro 0 1
