@@ -4,7 +4,11 @@
 	daily
 	missingok
 	notifempty
-	delaycompress
 	compress
+	delaycompress
 	create 0644 root root
+	sharedscripts
+	prerotate
+		[ -f /var/run/nas_backup ] && exit 1
+	endscript
 }
