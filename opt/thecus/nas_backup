@@ -73,7 +73,7 @@ while [[ $(smartctl -c $BK_DISK_ID | grep "Self-test routine in progress") ]]; d
 	sleep 5m & wait
 done
 
-echo "nas_backup :: mounting backup partition and starting synchronizing..." >> "$LOG_FILE"
+echo "nas_backup :: mounting backup partition and starting rsync job..." >> "$LOG_FILE"
 mount -t $BK_DISK_PART_FS $BK_DISK_PART $BK_DISK_PART_MOUNT
 cd $ST_DISK_PART_MOUNT
 rsync -XAa --delete --exclude=lost+found --log-file=$LOG_FILE ./ $BK_DISK_PART_MOUNT &
