@@ -1,0 +1,33 @@
+#!/bin/bash
+# This script backup nas dom mbr, paritions layout and filesystems.
+# --------------------------------
+# cyruz - http://ciroprincipe.info
+
+DISK_ID=ata-CHN-PADOM44HS01M-008S_0000000008CF04030020
+DEST=/mnt/disk_1/Backup/Linux_stuff/thecus/
+
+# Check if running as root.
+if [[ $(id -u) -ne 0 ]]; then
+	echo "Please run this script as root."
+	exit 1
+fi
+
+# Required tools check.
+for i in dd tar fdisk; do
+	type $i >/dev/null 2>&1 || { echo "$i not installed, aborting."; exit 1; }
+done
+
+# Backup MBR.
+# To restore: dd if=/path/to/mbr_xxx.bin of=/dev/sdx bs=512 count=1
+dd if=/dev/disk/by-id/$DISK_ID of="$DEST/mbr_$(date +%Y-%m-%d).bin" bs=512 count=1
+
+# Backup partition layout.
+fdisk -l /dev/disk/by-id/$DISK_ID > "$DEST/layout_$(date +%Y-%m-%d).txt"
+
+# Backup boot filesystem.
+tar cpvzf "$DEST/bootfs_$(date +%Y-%m-%d).tar.gz" -C /boot .
+
+# Backup root filesystem.
+tar cpvzf "$DEST/rootfs_$(date +%Y-%m-%d).tar.gz" --exclude=/dev/* --exclude=/proc/* \
+--exclude=/sys/* --exclude=/tmp/* --exclude=/run/* --exclude=/mnt/*/* --exclude=/media/*/* \
+--exclude=lost+found /
