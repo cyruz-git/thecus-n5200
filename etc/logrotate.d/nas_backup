@@ -9,6 +9,8 @@
 	create 0644 root root
 	sharedscripts
 	prerotate
-		[ -f /var/run/nas_backup ] && exit 1
+		if [ -e /var/run/nas_backup ]; then
+			exit 1
+		fi
 	endscript
 }
