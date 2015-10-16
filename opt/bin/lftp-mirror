@@ -1,7 +1,7 @@
 #!/bin/bash
 # lftp-mirror
 # --------------------------------
-# Mirror script for lftp. It mirrors a remote directory to a local one via SFTP.
+# Mirror script for lftp. It mirrors a remote directory to a local one via (S)FTP.
 #
 # It must be run passing a configuration file as parameter The file must contain the following variables:
 #
@@ -10,6 +10,11 @@
 # HOST = Remote host.
 # RDIR = Directory in the remote host, to be mirrored locally.
 # LDIR = Local directory receiving the mirror.
+# PORT = Remote port. Optional, default 21.
+# PROT = Coonection protocol. Optional, [ftp|stfp] default ftp.
+# FENC = Encrypt ftp transfer. Optional, [yes|no] default no.
+# NCON = Number of parallel downloads. Optional, [number] default 1.
+# NSEG = Number of parallel segments. Optional, [number] default 3.
 # --------------------------------
 # cyruz - http://ciroprincipe.info
 
@@ -43,10 +48,11 @@ if [[ -e "$FLOCK" ]]; then
     exit
 else
     touch "$FLOCK"
-    lftp -p 22 -u "$USR","$PWD" sftp://"$HOST" << EOF
-    set sftp:auto-confirm yes
-    set mirror:use-pget-n 5
-    mirror -c -P5 --log="$LDIR/$FNAME.log" "$RDIR" "$LDIR"
+    lftp -p ${PORT:-21} -u "$USR","$PWD" ${PROT:-ftp}://"$HOST" << EOF
+    set ssl:verify-certificate no
+	set ftp:ssl-protect-data ${FENC:-no}
+    set mirror:use-pget-n ${NSEG:-3}
+    mirror -c -P${NCON:-1} --log="$LDIR/$FNAME.log" "$RDIR" "$LDIR"
     quit
 EOF
     rm -f "$FLOCK"
