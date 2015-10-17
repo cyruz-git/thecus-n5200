@@ -50,7 +50,7 @@ else
     touch "$FLOCK"
     lftp -p ${PORT:-21} -u "$USR","$PWD" ${PROT:-ftp}://"$HOST" << EOF
     set ssl:verify-certificate no
-	set ftp:ssl-protect-data ${FENC:-no}
+    set ftp:ssl-protect-data ${FENC:-no}
     set mirror:use-pget-n ${NSEG:-3}
     mirror -c -P${NCON:-1} --log="$LDIR/$FNAME.log" "$RDIR" "$LDIR"
     quit
