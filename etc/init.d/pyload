@@ -1,11 +1,13 @@
 #!/bin/sh -e
 ### BEGIN INIT INFO
 # Provides:          pyload
-# Required-Start:    $local_fs $remote_fs $network
-# Required-Stop:     $local_fs $remote_fs $network
+# Required-Start:    $syslog $local_fs $network $remote_fs
+# Required-Stop:     $syslog $local_fs $network $remote_fs
+# Should-Start:      $remote_fs $named
+# Should-Stop:       $remote_fs $named
 # Default-Start:     2 3 4 5
 # Default-Stop:      0 1 6
-# Short-Description: Start or stop the pyload.
+# Short-Description: Start or stop pyload daemon.
 # Description:       Enable service provided by pyload.
 ### END INIT INFO
 
@@ -13,7 +15,6 @@ NAME=pyload
 DAEMON=/opt/pyload/pyLoadCore.py
 USER=pyload
 STOP_TIMEOUT=30
-PIDFILE=/var/run/$NAME.pid
 
 export PATH="${PATH:+$PATH:}/sbin"
 
@@ -23,35 +24,37 @@ export PATH="${PATH:+$PATH:}/sbin"
 
 . /lib/lsb/init-functions
 
-start_daemon () {
-    if [ $ENABLE_DAEMON != 1 ]; then
-        log_progress_msg "(disabled)"
-		log_end_msg 255 || true
-    else    
-        start-stop-daemon --start --pidfile $PIDFILE \
-        --chuid $USER --exec $DAEMON \
-        -- --daemon $OPTIONS | cut -d" " -f 3 > $PIDFILE
-		log_end_msg 0
-    fi
+if [ $ENABLE_DAEMON != 1 ]; then
+    log_progress_msg "(disabled)"
+    log_end_msg 255 || true
+	exit 0
+fi
+
+start_daemon() {
+    su $USER -s /bin/sh -c "$DAEMON --daemon $OPTIONS"
+    [ $? != 0 ] && { log_end_msg 1; exit 1; }
+}
+
+stop_daemon() {
+    su $USER -s /bin/sh -c "$DAEMON --quit"
+    [ $? != 0 ] && { log_end_msg 1; exit 1; }
 }
 
 case "$1" in
     start)
-        log_daemon_msg "Starting daemon" "$NAME"
+        log_daemon_msg "Starting daemon" "$NAME" && log_end_msg 0
         start_daemon
         ;;
     stop)
-        log_daemon_msg "Stopping daemon" "$NAME"
-        start-stop-daemon --stop --quiet \
-            --retry $STOP_TIMEOUT --pidfile $PIDFILE
-        log_end_msg 0
+        log_daemon_msg "Stopping daemon" "$NAME" && log_end_msg 0
+		stop_daemon
         ;;
     restart)
-        log_daemon_msg "Restarting daemon" "$NAME"
-        start-stop-daemon --stop --quiet \
-            --retry $STOP_TIMEOUT --pidfile $PIDFILE
-        start_daemon
-        ;;
+        log_daemon_msg "Restarting daemon" "$NAME" && log_eng_msg 0
+        stop_daemon
+        sleep $STOP_TIMEOUT
+		start_daemon
+		;;
     *)
         log_action_msg "Usage: /etc/init.d/$NAME {start|stop|restart}" || true
         exit 2
