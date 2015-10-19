@@ -50,7 +50,7 @@ case "$1" in
         stop_daemon
         ;;
     restart)
-        log_daemon_msg "Restarting daemon" "$NAME" && log_eng_msg 0
+        log_daemon_msg "Restarting daemon" "$NAME" && log_end_msg 0
         stop_daemon
         sleep $STOP_TIMEOUT
         start_daemon
