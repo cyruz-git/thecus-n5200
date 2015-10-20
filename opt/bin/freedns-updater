@@ -1,0 +1,36 @@
+#!/bin/bash
+# freedns-updater
+# --------------------------------
+# Update freedns.afraid.org dynamic dns.
+# Require a file containing the freedns update url.
+# --------------------------------
+# cyruz - http://ciroprincipe.info
+
+CHECK_URL=http://freedns.afraid.org/dynamic/check.php
+UPDATE_URL_FILE=/home/cyrus/.freedns_url
+UPDATE_URL=$(head -n1 $UPDATE_URL_FILE)
+UPDATE_REGEX=http://freedns\.afraid\.org/dynamic/update\.php\?[^\s]*
+IP_FILE=/tmp/freedns-updater.ip
+LOG_FILE=/var/log/freedns-updater.log
+LOG_IF_SAME=0
+
+[[ ! $UPDATE_URL =~ $UPDATE_REGEX ]] && { echo "Error: update URL missing or wrong."; exit 1; }
+for i in grep cut date wget
+do
+    type $i >/dev/null 2>&1 || { echo "Error: $i not installed. Aborting."; exit 1; }
+done
+
+IP=$(wget -o /dev/null -O - $CHECK_URL | grep Detected | cut -d : -f 2 | cut -d '<' -f 1 | tr -d " ")
+if [[ -f $IP_FILE ]] && [[ "$IP" == "$(cat $IP_FILE)" ]]; then
+    if [[ $LOG_IF_SAME -eq 1 ]]; then
+        echo $(date "+%Y-%m-%d %H:%M") "freedns-updater > Detected IP: $IP" >> $LOG_FILE
+        echo $(date "+%Y-%m-%d %H:%M") "freedns-updater > Same IP, no update sent." >> $LOG_FILE
+    fi
+    exit 1
+else
+    echo $IP > $IP_FILE
+    echo $(date "+%Y-%m-%d %H:%M") "freedns-updater > Detected IP: $IP" >> $LOG_FILE
+    echo $(date "+%Y-%m-%d %H:%M") "freedns-updater > Updating IP..." >> $LOG_FILE
+    echo $(date "+%Y-%m-%d %H:%M") "freedns-updater >" $(wget -o /dev/null -O - $UPDATE_URL) >> $LOG_FILE
+    exit 0
+fi

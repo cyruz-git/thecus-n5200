@@ -32,6 +32,7 @@ SOURCEFILES="
 /etc/init.d/aria2
 /etc/init.d/transmission-daemon
 /etc/init.d/pyload
+/etc/logrotate.d/freedns-updater
 /etc/logrotate.d/nas_backup
 /etc/nullmailer/
 /etc/proftpd/proftpd.conf
