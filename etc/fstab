@@ -15,6 +15,9 @@ UUID=1016b24c-9b2c-4a6e-8986-85bccb80dddf /boot       ext4 defaults          0 2
 UUID=19123761-2605-4037-99da-7353fa418e9b /mnt/disk_1 ext4 errors=remount-ro 0 1
 #UUID=550f9988-1eb6-4820-b31b-40978e0d65b9 /mnt/disk_2 ext4 errors=remount-ro 0 1
 
-# Download disk and swap file.
+# Download and var partitions.
 UUID=c5bbce4f-76bc-4059-8084-e748799d3719 /mnt/disk_5 ext4 defaults          0 1
-UUID=8d29109d-4480-4661-bdd6-3e9e83344645 none        swap sw                0 0
+UUID=843e1229-634e-4504-a4e6-9a65d435c7c4 /var        ext4 defaults          0 2
+
+# Swap file (in the download partition).
+/mnt/disk_5/.swapfile                     none        swap defaults          0 0

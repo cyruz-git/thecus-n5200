@@ -7,7 +7,7 @@ ENABLE_DAEMON=1
 # This directory stores some runtime information, like torrent files 
 # and links to the config file, which itself can be found in 
 # /etc/transmission/settings.json
-CONFIG_DIR="/mnt/disk_5/transmission/config"
+CONFIG_DIR="/etc/transmission"
 
 # Default options for daemon, see transmission-daemon(1) for more options
 OPTIONS="--config-dir $CONFIG_DIR"

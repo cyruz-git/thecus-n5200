@@ -5,7 +5,7 @@
 ENABLE_DAEMON=1
 
 # Configuration directory
-CONFIG_DIR="/mnt/disk_5/pyload/config" 
+CONFIG_DIR="/etc/pyload" 
 
 # Default options for daemon
 OPTIONS="--configdir $CONFIG_DIR"

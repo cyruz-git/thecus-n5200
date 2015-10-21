@@ -15,7 +15,7 @@ LOG_FILE=/var/log/freedns-updater.log
 LOG_IF_SAME=0
 
 [[ ! $UPDATE_URL =~ $UPDATE_REGEX ]] && { echo "Error: update URL missing or wrong."; exit 1; }
-for i in grep cut date wget
+for i in grep cut tr date wget
 do
     type $i >/dev/null 2>&1 || { echo "Error: $i not installed. Aborting."; exit 1; }
 done

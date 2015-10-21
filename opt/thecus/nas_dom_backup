@@ -29,5 +29,8 @@ tar cpvzf "$DEST/bootfs_$(date +%Y-%m-%d).tar.gz" -C /boot .
 
 # Backup root filesystem.
 tar cpvzf "$DEST/rootfs_$(date +%Y-%m-%d).tar.gz" --exclude=/dev/* --exclude=/proc/* \
---exclude=/sys/* --exclude=/tmp/* --exclude=/run/* --exclude=/mnt/*/* --exclude=/media/*/* \
---exclude=lost+found /
+--exclude=/sys/* --exclude=/tmp/* --exclude=/run/* --exclude=/boot/* --exclude=/var/* \
+--exclude=/mnt/*/* --exclude=/media/*/* --exclude=lost+found /
+
+# Backup var filesystem.
+tar cpvzf "$DEST/varfs_$(date +%Y-%m-%d).tar.gz" -C /var .
