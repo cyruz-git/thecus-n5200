@@ -23,6 +23,7 @@ SOURCEFILES="
 /etc/mathopd.conf
 /etc/minidlna.conf
 /etc/smartd.conf
+/etc/nut/
 /etc/sudoers
 /etc/apt/sources.list
 /etc/default/mathopd

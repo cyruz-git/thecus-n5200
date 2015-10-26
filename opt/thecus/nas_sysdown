@@ -1,5 +1,5 @@
 #!/bin/bash
-# This script shuts down or reboot the NAS.
+# This script shuts down or reboots the NAS.
 # It checks if important operations are going on before doing it.
 # --------------------------------
 # cyruz - http://ciroprincipe.info
@@ -17,4 +17,4 @@ fi
 
 # Shutdown or reboot.
 [[ "$1" == "shutdown" ]] && PARAM="-h" || PARAM="-r"
-shutdown $PARAM -t 0 now
+/sbin/shutdown $PARAM -t 0 now
