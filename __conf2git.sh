@@ -43,6 +43,7 @@ SOURCEFILES="
 /etc/rsyslog.d/smartd.conf
 /etc/transmission/settings.json
 /etc/samba/smb.conf
+/etc/udev/rules.d/10-powerwalker.rules
 /opt/bin/
 /opt/build/update-*
 /opt/thecus/
