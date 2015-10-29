@@ -37,6 +37,7 @@ SOURCEFILES="
 /etc/init.d/syncthing
 /etc/logrotate.d/freedns-updater
 /etc/logrotate.d/nas_backup
+/etc/network/interfaces
 /etc/nullmailer/
 /etc/proftpd/proftpd.conf
 /etc/pyload/pyload.conf
