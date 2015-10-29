@@ -6,23 +6,39 @@
 # --------------------------------
 # cyruz - http://ciroprincipe.info
 
-CHECK_URL=http://freedns.afraid.org/dynamic/check.php
-UPDATE_URL_FILE=/home/cyrus/.freedns_url
-UPDATE_URL=$(head -n1 $UPDATE_URL_FILE)
-UPDATE_REGEX=http://freedns\.afraid\.org/dynamic/update\.php\?[^\s]*
+UPD_URL_FILE=/home/cyrus/.freedns_url
+LOG_ON_ERROR=0
+
+### URL
+UPD_URL=$(head -n1 $UPD_URL_FILE)
+IP_URL=http://freedns.afraid.org/dynamic/check.php
+###
+
+### REGEX
+UPD_REGEX="http://freedns\.afraid\.org/dynamic/update\.php\?[^\s]*"
+IP_REGEX="(?<=Detected IP : )[\d]+\.[\d]+\.[\d]+.[\d]+"
+###
+
+### FILES
 IP_FILE=/tmp/freedns-updater.ip
 LOG_FILE=/var/log/freedns-updater.log
-LOG_IF_SAME=0
+###
 
-[[ ! $UPDATE_URL =~ $UPDATE_REGEX ]] && { echo "Error: update URL missing or wrong."; exit 1; }
-for i in grep cut tr date wget
+[[ ! $UPD_URL =~ $UPD_REGEX ]] && { echo "Error: update URL missing or wrong."; exit 1; }
+for i in grep date wget
 do
     type $i >/dev/null 2>&1 || { echo "Error: $i not installed. Aborting."; exit 1; }
 done
 
-IP=$(wget -o /dev/null -O - $CHECK_URL | grep Detected | cut -d : -f 2 | cut -d '<' -f 1 | tr -d " ")
-if [[ -f $IP_FILE ]] && [[ "$IP" == "$(cat $IP_FILE)" ]]; then
-    if [[ $LOG_IF_SAME -eq 1 ]]; then
+IP=$(wget -o /dev/null -O - $IP_URL | grep -Po "$IP_REGEX")
+
+if [[ "$IP" == "" ]]; then
+    if [[ $LOG_ON_ERROR -eq 1 ]]; then
+        echo $(date "+%Y-%m-%d %H:%M") "freedns-updater > IP not detected!" >> $LOG_FILE
+    fi
+    exit 1
+elif [[ -f $IP_FILE ]] && [[ "$IP" == "$(cat $IP_FILE)" ]]; then
+    if [[ $LOG_ON_ERROR -eq 1 ]]; then
         echo $(date "+%Y-%m-%d %H:%M") "freedns-updater > Detected IP: $IP" >> $LOG_FILE
         echo $(date "+%Y-%m-%d %H:%M") "freedns-updater > Same IP, no update sent." >> $LOG_FILE
     fi
@@ -31,6 +47,6 @@ else
     echo $IP > $IP_FILE
     echo $(date "+%Y-%m-%d %H:%M") "freedns-updater > Detected IP: $IP" >> $LOG_FILE
     echo $(date "+%Y-%m-%d %H:%M") "freedns-updater > Updating IP..." >> $LOG_FILE
-    echo $(date "+%Y-%m-%d %H:%M") "freedns-updater >" $(wget -o /dev/null -O - $UPDATE_URL) >> $LOG_FILE
+    echo $(date "+%Y-%m-%d %H:%M") "freedns-updater >" $(wget -o /dev/null -O - $UPD_URL) >> $LOG_FILE
     exit 0
 fi
