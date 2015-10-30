@@ -9,12 +9,13 @@
 
 LOCK_FILE=/var/run/nas_backup
 LOG_FILE=/var/log/nas_backup.log
+LED_MNGR=/opt/thecus/nas_led
 BK_DISK_ID=/dev/disk/by-id/ata-WDC_WD40EFRX-68WT0N0_WD-WCC4E2UUVFRS
 BK_DISK_PART=/dev/disk/by-id/ata-WDC_WD40EFRX-68WT0N0_WD-WCC4E2UUVFRS-part1
 BK_DISK_PART_FS=ext4
 BK_DISK_PART_MOUNT=/mnt/disk_2
 ST_DISK_PART_MOUNT=/mnt/disk_1
-LED_MNGR=/opt/thecus/nas_led
+PRE_SYNC_SCRIPT=/opt/thecus/nas_dropbox_sync
 
 # This is a cleanup function executed when catching the SIGTERM signal.
 exitgracefully() {
@@ -73,6 +74,11 @@ while [[ $(smartctl -c $BK_DISK_ID | grep "Self-test routine in progress") ]]; d
 	sleep 5m & wait
 done
 
+if [[ -n "$PRE_SYNC_SCRIPT" ]]; then
+	echo "nas_backup :: running pre synchronization script..." >> "$LOG_FILE"
+	$PRE_SYNC_SCRIPT
+fi
+
 echo "nas_backup :: mounting backup partition and starting rsync job..." >> "$LOG_FILE"
 mount -t $BK_DISK_PART_FS $BK_DISK_PART $BK_DISK_PART_MOUNT
 cd $ST_DISK_PART_MOUNT
@@ -81,6 +87,11 @@ rsync -XAa --delete --exclude=lost+found --log-file=$LOG_FILE ./ $BK_DISK_PART_M
 # We started rsync in background so we save its pid and wait to trap signals.
 RSYNC_PID=$!
 wait
+
+if [[ -n "$POST_SYNC_SCRIPT" ]]; then
+	echo "nas_backup :: running post synchronization script..." >> "$LOG_FILE"
+	$POST_SYNC_SCRIPT
+fi
 
 echo "nas_backup :: unmounting backup partition and putting the drive to sleep..." >> "$LOG_FILE"
 umount $BK_DISK_PART

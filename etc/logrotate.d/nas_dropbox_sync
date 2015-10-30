@@ -1,0 +1,10 @@
+/mnt/disk_5/rclone/config/dropbox-sync.log
+{
+	rotate 4
+	daily
+	missingok
+	notifempty
+	compress
+	delaycompress
+	create 0660 cyrus exthd
+}

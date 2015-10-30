@@ -1,0 +1,32 @@
+#!/bin/bash
+# nas_dropbox_sync
+# --------------------------------
+# Script to synchronize Dropbox to the download hard drive
+# and the specified directories to the storage hard drive.
+# Require rclone.
+# --------------------------------
+# cyruz - http://ciroprincipe.info
+
+RCLONE_BIN=/opt/rclone/rclone
+RCLONE_USER=cyrus
+RCLONE_CONFIG=/mnt/disk_5/rclone/config/.rclone.conf
+RCLONE_REMOTE=RemoteDropbox:/
+RCLONE_LOCAL=LocalDropbox:/mnt/disk_5/rclone/dropbox/
+DROPBOX_SOURCE=/mnt/disk_5/rclone/dropbox
+DROPBOX_DESTIN=/mnt/disk_1
+DROPBOX_SUBDIR="Documents Programming Software Work"
+LOG_FILE=/mnt/disk_5/rclone/config/dropbox-sync.log
+
+[[ $(id -u) -ne 0 ]] && { echo "Please run this script as root!"; exit 1; }
+for i in $RCLONE_BIN rsync; do
+	type $i >/dev/null 2>&1 || { echo "Error: $i not installed. Aborting." >> $LOG_FILE; exit 1; }
+done
+
+# Synchronize Dropbox to the download hard drive.
+su $RCLONE_USER -s /bin/sh -c \
+  "$RCLONE_BIN --config=$RCLONE_CONFIG --log-file=$LOG_FILE sync $RCLONE_REMOTE $RCLONE_LOCAL >/dev/null 2>&1"
+
+# Synchronize Dropbox directories to the storage hard drive.
+for i in $DROPBOX_SUBDIR; do
+	rsync -XAa --delete --log-file=$LOG_FILE $DROPBOX_SOURCE/$i/ $DROPBOX_DESTIN/$i/
+done

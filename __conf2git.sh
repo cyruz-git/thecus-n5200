@@ -37,6 +37,7 @@ SOURCEFILES="
 /etc/init.d/syncthing
 /etc/logrotate.d/freedns-updater
 /etc/logrotate.d/nas_backup
+/etc/logrotate.d/nas_dropbox_sync
 /etc/network/interfaces
 /etc/nullmailer/
 /etc/proftpd/proftpd.conf
@@ -47,6 +48,7 @@ SOURCEFILES="
 /etc/udev/rules.d/10-powerwalker.rules
 /opt/bin/
 /opt/build/update-*
+/opt/rclone/update-rclone.sh
 /opt/thecus/
 "
 DESTDIR="$HOMEDIR/thecus-n5200/"
