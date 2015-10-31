@@ -7,4 +7,5 @@
 	compress
 	delaycompress
 	create 0660 cyrus exthd
+	su cyrus exthd
 }
