@@ -1,0 +1,26 @@
+#!/bin/bash
+# Chroot Launcher
+# --------------------------------
+# cyruz - http://ciroprincipe.info
+
+# Checks...
+[[ $(/usr/bin/id -u) -ne 0 ]] && { echo "Please run this script as root!"; exit 1; }
+[[ $# != 1 ]] && { echo "Usage: run-chroot <chroot dir>"; exit 1; }
+[[ ! -d "$1" ]] && { echo "Chroot directory doesn't exist!"; exit 1; }
+
+echo -en "Mounting pseudo filesystems... "
+if !( mount proc "$1/proc" -t proc && mount sysfs "$1/sys" -t sysfs && mount devpts "$1/dev/pts" -t devpts ); then
+	echo "Mounting failed."
+	exit 1
+fi; echo -en "[OK]\n"
+
+echo "Chroot start on <$1>"
+chroot "$1" /usr/bin/env -i \
+HOME=/root USER=root TERM=$TERM PS1='\u:\w\$ ' \
+/bin/bash --login
+echo "Chroot end on <$1>"
+
+echo -en "Unmounting pseudo filesystems... "
+for i in /dev/pts /sys /proc; do
+	umount "$1$i"
+done; echo -en "[OK]\n"

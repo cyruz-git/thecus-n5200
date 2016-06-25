@@ -3,21 +3,20 @@
 # Require ICH4_GPIO kernel module.
 #
 # It accepts 1 parameter that can be "busy", "copy" or "fail"
-# and toggles the corresponding led exporting its state.
+# and toggles the corresponding led, exporting its state.
 #
 # Thanks to: https://www.chaostreff.ch/Thecus_n5200_Debian
 # --------------------------------
 # cyruz - http://ciroprincipe.info
 
-if [[ ! -f /proc/thecus_io ]]; then
-	echo "Please install the ICH4_GPIO module!"
-	exit 1
-fi
+# Check if running as root.
+[[ $(id -u) -ne 0 ]] && { echo "Please run this script as root."; exit 1; }
 
-if [[ "$1" != "busy" && "$1" != "copy" && "$1" != "fail" ]]; then
-	echo "Usage: nas_led <busy | copy | fail>"
-	exit 1
-fi
+# Check ICH4_GPIO module presence.
+[[ ! -f /proc/thecus_io ]] && { echo "Please install the ICH4_GPIO module!"; exit 1; }
+
+# Check parameters.
+[[ "$1" != "busy" && "$1" != "copy" && "$1" != "fail" ]] && { echo "Usage: nas_led <busy | copy | fail>"; exit 1; }
 
 FILE="/var/run/thecus/led."$1
 [[ ! -d /var/run/thecus ]] && mkdir -p /var/run/thecus
@@ -31,4 +30,3 @@ echo ${1^} $LED > /proc/thecus_io
 
 # Save led state.
 echo $LED > $FILE
-

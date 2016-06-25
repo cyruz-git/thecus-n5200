@@ -1,7 +1,7 @@
 /var/log/freedns-updater.log
 {
 	rotate 4
-	daily
+	weekly
 	missingok
 	notifempty
 	compress

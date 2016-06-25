@@ -24,7 +24,7 @@ export PATH="${PATH:+$PATH:}/sbin"
 
 start_daemon () {
     if [ $ENABLE_DAEMON != 1 ]; then
-        log_progress_msg "(disabled)"
+        log_progress_msg "(disabled in /etc/default/transmission-daemon)"
 		log_end_msg 255 || true
     else    
         start-stop-daemon --start \

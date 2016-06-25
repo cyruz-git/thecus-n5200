@@ -1,39 +1,26 @@
 #!/bin/bash
-#
-# Clone urlwatch git repository and create a minimal deb.
-# Require: python-concurrent.futures python-keyring
+# urlwatch updater script.
 
-[[ $(id -u) -ne 0 ]] && { echo "Please run as root."; exit 1; }
-for i in python dpkg-deb; do
-        type $i >/dev/null 2>&1 || { echo "Error: $i not installed. Aborting."; exit 1; }
-done
+PKGNAME="urlwatch"
+REQUIREDPKG="python-concurrent.futures python-keyring"
 
-rm -rf urlwatch
-git clone https://github.com/thp/urlwatch.git
-cd urlwatch
+# Import common functions.
+. "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/common/common-functions.sh" || exit 1
 
-python setup.py bdist
-cd dist
+# Parse commandline arguments.
+parse_arguments $@
 
-mkdir -p debian/DEBIAN
-tar xvzf urlwatch-*.tar.gz -C debian
-VER=$(ls urlwatch-* | grep -Po '(?<=urlwatch-)[1-9]*\.[1-9]*')
-cat > debian/DEBIAN/control <<EOF
-Package: urlwatch
-Version: $VER
-Section: net
-Priority: optional
-Architecture: all
-Depends: python, python (>= 3.2) | python-concurrent.futures, python-keyring
-Maintainer: cyruz <focabresm@gmail.com>
-Description: A tool for monitoring webpages for updates
- This is a simple URL watcher, designed to send you diffs of webpages as they change.
- Ideal for watching web pages of university courses, so you always know when lecture
- dates have changed or new tasks are online :)
-EOF
+# Prerequisites.
+check_root
+check_packages $REQUIREDPKG
+[[ -n "$MISSINGPKG" ]] && install_packages $MISSINGPKG
 
-dpkg-deb --build debian
-echo Moving debian.deb to urlwatch-$VER.deb
-mv debian.deb urlwatch-$VER.deb
-echo urlwatch-$VER.deb present in urlwatch/dist
+# Version check and sources update.
+deb_check_version $PKGNAME
+deb_update_sources $PKGNAME
+cd $PKGNAME*
 
+echo "Build deb package."
+dpkg-buildpackage -us -uc
+
+[[ -n "$INSTALLDEB" ]] && { echo "Install the deb."; dpkg -i $PKGNAME*.deb; }

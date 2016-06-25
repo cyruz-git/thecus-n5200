@@ -1,4 +1,4 @@
-/var/log/nas_backup.log
+/var/log/nas_snapraid.log
 {
 	rotate 4
 	weekly
@@ -9,7 +9,7 @@
 	create 0644 root root
 	sharedscripts
 	prerotate
-		if [ -e /var/run/nas_lock ]; then
+		if [ -e /var/run/nas_lock ]]; then
 			exit 1
 		fi
 	endscript

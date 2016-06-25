@@ -4,13 +4,17 @@
 # --------------------------------
 # cyruz - http://ciroprincipe.info
 
-LED_MNGR=/opt/thecus/nas_led
+# Import common functions.
+. "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/common/nas_common.sh" || exit 1
 
-# Turn on fail led if ICH4_GPIO module is loaded.
-[[ -f /proc/thecus_io ]] && $LED_MNGR fail
+# Check...
+preliminary_check
+
+# Turn on fail led.
+toggle_led fail
 
 # Notify by mail.
-echo "$SMARTD_MESSAGE" | mail -s "$SMARTD_FAILTYPE" "$SMARTD_ADDRESS"
+mail_notify "$SMARTD_FAILTYPE" "$SMARTD_MESSAGE"
 
 # Notify user. COMMENTED, NOT WORKING.
 #echo "$SMARTD_MESSAGE" | wall

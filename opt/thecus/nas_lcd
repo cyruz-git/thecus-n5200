@@ -12,7 +12,7 @@
 # --------------------------------
 # cyruz - http://ciroprincipe.info
 
-UARTPKT2=/opt/thecus/uartpkt2
+UARTPKT2=/opt/thecus/common/uartpkt2
 
 fillmsg() {
     unset FILL
@@ -29,14 +29,16 @@ PREFIX="\2\1\0U\31"
 SUFFIX="\0$(fillmsg "" 19)\0\0$(fillmsg "" 20)\000$(fillmsg "" 20)\0\3"
 # ---
 
-if [[ ! -f /proc/thecus_io ]]; then
-	echo "Please install the ICH4_GPIO module!"
-	exit 1
-fi
+# Check if running as root.
+[[ $(id -u) -ne 0 ]] && { echo "Please run this script as root."; exit 1; }
 
+# Check ICH4_GPIO module presence.
+[[ ! -f /proc/thecus_io ]] && { echo "Please install the ICH4_GPIO module!"; exit 1; }
+
+# Check string format.
 if [[ "$#" -lt 1 || ("$#" -eq 2 && "$2" != "init") || "$#" -gt 2 ]]; then
 	echo -e "Usage: nas_lcd 'STRING TO BE SHOWN' \
-			\nThe string must be <= 20 chars, exceeding chars will be trimmed"
+			\nThe string must be <= 20 chars, exceeding chars will be trimmed."
 	exit 1
 fi
 
@@ -45,12 +47,11 @@ TRIMMED=${1:0:20}
 STRING=$PREFIX$TRIMMED$(fillmsg "$TRIMMED" 20)$SUFFIX
 
 echo "uP_reset 0" > /proc/thecus_io
-sleep 1
+sleep 1s
 echo "uP_reset 1" > /proc/thecus_io
-sleep 3
+sleep 3s
 
 $UARTPKT2 HEARTBT >/dev/null 2>&1 &
-sleep 3
+sleep 3s
 pkill uartpkt2
 printf "$STRING" > /dev/ttyS1
-

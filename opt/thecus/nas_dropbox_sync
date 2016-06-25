@@ -1,32 +1,73 @@
 #!/bin/bash
-# nas_dropbox_sync
-# --------------------------------
 # Script to synchronize Dropbox to the download hard drive
 # and the specified directories to the storage hard drive.
 # Require rclone.
 # --------------------------------
 # cyruz - http://ciroprincipe.info
 
-RCLONE_BIN=/opt/rclone/rclone
+RCLONE_BIN=/usr/local/bin/rclone
 RCLONE_USER=cyrus
-RCLONE_CONFIG=/mnt/disk_5/rclone/config/.rclone.conf
+RCLONE_CONFIG=/mnt/disk_helper/rclone/config/.rclone.conf
 RCLONE_REMOTE=RemoteDropbox:/
-RCLONE_LOCAL=LocalDropbox:/mnt/disk_5/rclone/dropbox/
-DROPBOX_SOURCE=/mnt/disk_5/rclone/dropbox
+RCLONE_LOCAL=LocalDropbox:/mnt/disk_helper/rclone/dropbox/
+DROPBOX_SOURCE=/mnt/disk_helper/rclone/dropbox
 DROPBOX_DESTIN=/mnt/disk_1
 DROPBOX_SUBDIR="Documents Programming Software Work"
-LOG_FILE=/mnt/disk_5/rclone/config/dropbox-sync.log
 
-[[ $(id -u) -ne 0 ]] && { echo "Please run this script as root!"; exit 1; }
-for i in $RCLONE_BIN rsync; do
-	type $i >/dev/null 2>&1 || { echo "Error: $i not installed. Aborting." >> $LOG_FILE; exit 1; }
-done
+# This is a cleanup function executed when catching the SIGTERM signal.
+exitgracefully() { 
+	ERRMSG="Caught SIGTERM"
+	if [[ -n "$WAIT_PID" ]]; then
+		PROGRAM=$(ps -p $WAIT_PID -o comm | cut -d $'\n' -f2)
+		ERRMSG=$ERRMSG" - $PROGRAM terminated."
+		kill $([[ "$PROGRAM" == "rclone" ]] && echo "-SIGKILL" || echo "-SIGINT") $WAIT_PID
+	fi
+	write_log -t "$ERRMSG\n" && mail_notify "$HOSTNAME - NAS_DROPBOX_SYNC MESSAGE" "$ERRMSG"
+	chown root:root $LOG_FILE
+	toggle_led copy && remove_lock
+	write_log -t "Script terminated.\n"
+	exit 1
+}
+
+# Import common functions.
+. "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/common/nas_common.sh" || exit 1
+
+# Redirect all output to log file and write log.
+redirect_out && write_log -t "Script started.\n"
+
+# Checks...
+preliminary_check $RCLONE_BIN rsync
+running_check
+
+# Set trap on SIGTERM, create lock and turn on copy led before starting operations.
+trap exitgracefully SIGTERM
+create_lock && toggle_led copy
+
+# Change log file owner temporarily.
+write_log -t "Changing log owner...\n"
+chown $RCLONE_USER:root $LOG_FILE
 
 # Synchronize Dropbox to the download hard drive.
+write_log -t "Synchronize remote DropBox to local...\n"
 su $RCLONE_USER -s /bin/sh -c \
-  "$RCLONE_BIN --config=$RCLONE_CONFIG --log-file=$LOG_FILE sync $RCLONE_REMOTE $RCLONE_LOCAL >/dev/null 2>&1"
+  "$RCLONE_BIN --config=$RCLONE_CONFIG --log-file=$LOG_FILE sync $RCLONE_REMOTE $RCLONE_LOCAL &"
+WAIT_PID=$(pidof rclone) # Rclone in background, wait to trap signals.
+while [[ -e /proc/$WAIT_PID ]]; do sleep 1s; done # Wait a non-child process with a while loop.
+WAIT_PID="" # Whiteout the variable.
+
+# Restore log file owner.
+write_log -t "Restoring log owner...\n"
+chown root:root $LOG_FILE
 
 # Synchronize Dropbox directories to the storage hard drive.
+write_log -t "Synchronizing DropBox content to the storage hard drive...\n"
 for i in $DROPBOX_SUBDIR; do
-	rsync -XAa --delete --log-file=$LOG_FILE $DROPBOX_SOURCE/$i/ $DROPBOX_DESTIN/$i/
+	rsync -XAa --delete --log-file=$LOG_FILE $DROPBOX_SOURCE/$i/ $DROPBOX_DESTIN/$i/ &
+	WAIT_PID=$! # Rsync in background, wait to trap signals.
+	wait
+	WAIT_PID="" # Whiteout the variable.
 done
+
+# Turn off copy led, remove lock file and write log.
+toggle_led copy && remove_lock
+write_log -t "Script ended.\n"

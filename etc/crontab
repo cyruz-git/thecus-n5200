@@ -7,15 +7,16 @@
 SHELL=/bin/sh
 PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 
-# m h dom mon dow user	command
-17  *	* * *	root    cd / && run-parts --report /etc/cron.hourly
-25  1	* * *	root	test -x /usr/sbin/anacron || ( cd / && run-parts --report /etc/cron.daily )
-47  1	* * 7	root	test -x /usr/sbin/anacron || ( cd / && run-parts --report /etc/cron.weekly )
-52  1	1 * *	root	test -x /usr/sbin/anacron || ( cd / && run-parts --report /etc/cron.monthly )
-#
+#m	h	dom	mon	dow	user	command
 
-# nas_backup script at 03:00 AM every day
-0   3	* * *	root	/opt/thecus/nas_backup >/dev/null 2&>1
+# cron hourly/daily/weekly/monthly directories.
+17	*	*	*	*	root	cd / && run-parts --report /etc/cron.hourly
+25  1	*	*	*	root	test -x /usr/sbin/anacron || ( cd / && run-parts --report /etc/cron.daily )
+47  1	*	*	7	root	test -x /usr/sbin/anacron || ( cd / && run-parts --report /etc/cron.weekly )
+52  1	1	*	*	root	test -x /usr/sbin/anacron || ( cd / && run-parts --report /etc/cron.monthly )
 
-# freedns_updater script every 5 minutes, every day
-*/5 *	* * *	root	/opt/bin/freedns-updater
+# nas_crontab_helper script every day, at 04:00 AM.
+0	4	*	*	*	root	/opt/thecus/nas_cron_helper >/dev/null 2>&1
+
+# freedns_updater script every 5 minutes, every day.
+*/5	*	*	*	*	root	/opt/bin/freedns-updater

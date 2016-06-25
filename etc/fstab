@@ -7,17 +7,18 @@
 # <file system> <mount point>   <type>  <options>       <dump>  <pass>
 
 # Root, boot and swap partitions (SWAP DISABLED BECAUSE ON A FLASH DRIVE).
-UUID=4325a4c4-2973-4b49-a289-e7a415503024 /           ext4 errors=remount-ro 0 1
-UUID=1016b24c-9b2c-4a6e-8986-85bccb80dddf /boot       ext4 defaults          0 2
-#UUID=d26539ef-c86a-475f-a804-0692bd5d2581 none        swap sw                0 0
+UUID=4325a4c4-2973-4b49-a289-e7a415503024 /                ext4 errors=remount-ro 0 1
+UUID=1016b24c-9b2c-4a6e-8986-85bccb80dddf /boot            ext4 defaults          0 2
+#UUID=d26539ef-c86a-475f-a804-0692bd5d2581 none             swap sw                0 0
 
-# Storage and backup disks (BACKUP DISABLED BECAUSE IT WILL BE MOUNTED BY BACKUP SCRIPT).
-UUID=19123761-2605-4037-99da-7353fa418e9b /mnt/disk_1 ext4 errors=remount-ro 0 1
-#UUID=550f9988-1eb6-4820-b31b-40978e0d65b9 /mnt/disk_2 ext4 errors=remount-ro 0 1
+# Disks array and parity. Backup disk is managed by backup script.
+UUID=19123761-2605-4037-99da-7353fa418e9b /mnt/disk_1 	   ext4 errors=remount-ro 0 1
+UUID=e4283f7e-a315-4884-8f23-09a08095fba1 /mnt/disk_2 	   ext4 errors=remount-ro 0 1
+UUID=642073d2-bf52-430a-a347-1053b1f22801 /mnt/disk_parity ext4 errors=remount-ro 0 1
 
-# Download and var partitions.
-UUID=c5bbce4f-76bc-4059-8084-e748799d3719 /mnt/disk_5 ext4 defaults          0 1
-UUID=843e1229-634e-4504-a4e6-9a65d435c7c4 /var        ext4 defaults          0 2
+# Helper and var partitions in the helper disk.
+UUID=c5bbce4f-76bc-4059-8084-e748799d3719 /mnt/disk_helper ext4 defaults          0 1
+UUID=843e1229-634e-4504-a4e6-9a65d435c7c4 /var             ext4 defaults          0 2
 
 # Swap file (in the download partition).
-/mnt/disk_5/.swapfile                     none        swap defaults          0 0
+/mnt/disk_helper/.swapfile                none             swap defaults          0 0

@@ -1,8 +1,8 @@
 #!/bin/bash
-# plowshare updater script.
+# egctl updater script.
 
-PKGNAME="plowshare"
-REQUIREDPKG="bash coreutils curl recode spidermonkey aview make"
+PKGNAME="egctl"
+REQUIREDPKG="git"
 
 # Import common functions.
 . "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/common/common-functions.sh" || exit 1
@@ -19,30 +19,28 @@ check_packages $REQUIREDPKG
 [[ ! -d $PKGNAME ]] && mkdir $PKGNAME
 cd $PKGNAME
 git_check_version $PKGNAME
-git_update_sources https://github.com/mcrapet/plowshare.git
-
-echo -en "Extracting version number... "
-VER=$(head -n1 plowshare/CHANGELOG | grep -Po '(?<=plowshare \()[\d\.]*')
-echo -en "[OK]\n"
+git_update_sources https://github.com/unterwulf/egctl.git
 
 echo -en "Setting up debian packaging files... "
 mkdir -p debian/DEBIAN && DEBTREE=$PWD"/debian"
 cat > debian/DEBIAN/control << EOF
 Package: $PKGNAME
-Version: $VER
+Version: $(date +"%Y-%m-%d")
 Section: net
 Priority: optional
-Architecture: all
-Depends: bash, coreutils, curl
-Recommends: recode, spidermonkey, aview
-Homepage: https://github.com/mcrapet/plowshare
+Architecture: i386
+Depends:
+Homepage: https://github.com/unterwulf/egctl
 Maintainer: cyruz <focabresm@gmail.com>
-Description: Set of command-line tools designed for managing file-sharing websites.
+Description: Program to control the state of EnerGenie Programmable surge protector with LAN interface.
 EOF
 echo -en "[OK]\n"
 
+echo "Compile sources."
+cd egctl && make
+
 echo "Install binaries in the debian packaging tree."
-cd plowshare && make install PREFIX=/usr/local DESTDIR="$DEBTREE"
+make install DESTDIR="$DEBTREE"
 
 echo "Build deb package."
 cd .. && dpkg-deb --build debian .

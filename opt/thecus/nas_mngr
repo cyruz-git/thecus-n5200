@@ -7,14 +7,12 @@
 # --------------------------------
 # cyruz - http://ciroprincipe.info
 
-LED_MNGR=/opt/thecus/nas_led
-LCD_MNGR=/opt/thecus/nas_lcd
-SYS_DOWN=/opt/thecus/nas_sysdown
+# Import common functions.
+. "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/common/nas_common.sh" || exit 1
 
-if [[ ! -f /proc/thecus_io ]]; then
-        echo "Please install the ICH4_GPIO module!"
-        exit 1
-fi
+# Checks...
+preliminary_check
+[[ ! -e /proc/thecus_io ]] && { logger -s "ICH4_GPIO module not installed, aborting..."; exit 1; }
 
 $LCD_MNGR "CYRUS STORAGE BOX"
 
@@ -31,6 +29,5 @@ while true; do
 		$SYS_DOWN reboot
 		break
 	fi
-	sleep 2
+	sleep 3s
 done
-

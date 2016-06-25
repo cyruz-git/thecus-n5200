@@ -4,16 +4,18 @@
 # --------------------------------
 # cyruz - http://ciroprincipe.info
 
-NAS_BACKUP_LOCK_FILE=/var/run/nas_backup
+# Import common functions.
+. "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/common/nas_common.sh" || exit 1
 
-if [[ "$1" != "shutdown" && "$1" != "reboot" ]]; then
-	echo "Usage: nas_sysdown <shutdown | reboot>"
-	exit 1
-fi
+# Checks...
+preliminary_check
 
-# Check if the backup script is running.
-# If it is, try to terminate it gracefully.
-[[ -f $NAS_BACKUP_LOCK_FILE ]] && kill -SIGTERM $(cat $NAS_BACKUP_LOCK_FILE)
+# Check parameters.
+[[ "$1" != "shutdown" && "$1" != "reboot" ]] && { echo "Usage: nas_sysdown <shutdown | reboot>"; exit 1; }
+
+# Check if any sync or backup script is running.
+# If it is, try to terminate it gracefully and sleep for 10 seconds.
+[[ -f $LOCK_FILE ]] && { kill -SIGTERM $(< $LOCK_FILE); sleep 10s; }
 
 # Shutdown or reboot.
 [[ "$1" == "shutdown" ]] && PARAM="-h" || PARAM="-r"

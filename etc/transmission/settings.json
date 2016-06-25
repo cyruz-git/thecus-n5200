@@ -1,6 +1,6 @@
 {
     "alt-speed-down": 300, 
-    "alt-speed-enabled": true, 
+    "alt-speed-enabled": false, 
     "alt-speed-time-begin": 600, 
     "alt-speed-time-day": 127, 
     "alt-speed-time-enabled": true, 
@@ -12,13 +12,13 @@
     "blocklist-url": "http://www.example.com/blocklist", 
     "cache-size-mb": 4, 
     "dht-enabled": true, 
-    "download-dir": "/mnt/disk_5/transmission/complete", 
+    "download-dir": "/mnt/disk_helper/transmission/complete", 
     "download-queue-enabled": true, 
     "download-queue-size": 5, 
     "encryption": 1, 
     "idle-seeding-limit": 30, 
     "idle-seeding-limit-enabled": false, 
-    "incomplete-dir": "/mnt/disk_5/transmission/incomplete", 
+    "incomplete-dir": "/mnt/disk_helper/transmission/incomplete", 
     "incomplete-dir-enabled": true, 
     "lpd-enabled": false, 
     "max-peers-global": 1000, 
@@ -64,6 +64,6 @@
     "umask": 6, 
     "upload-slots-per-torrent": 4, 
     "utp-enabled": true, 
-    "watch-dir": "/mnt/disk_5/transmission/monitor", 
+    "watch-dir": "/mnt/disk_helper/transmission/monitor", 
     "watch-dir-enabled": true
 }

@@ -1,0 +1,24 @@
+#!/bin/bash
+# rsyncps
+# --------------------------------
+# This script adds the "retry" feature to rsync.
+# It has sense only if used with the "-P" parameter.
+#
+# Example: rsyncps -e "ssh -p 22" -Pavz user@hostname:/somedir/somefile ~/somedir/somefile
+#
+# The automatic SSH login is not handled by this script.
+# --------------------------------
+# cyruz - http://ciroprincipe.info
+
+# Uncomment and set if you need the proxy
+# export RSYNC_PROXY=proxy:8080
+
+while [ 1 ]; do
+	rsync "$@" 
+	if [ "$?" = "0" ]; then
+		exit
+	else
+		sleep 10 
+	fi
+done
+

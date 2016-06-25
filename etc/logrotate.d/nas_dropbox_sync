@@ -1,11 +1,16 @@
-/mnt/disk_5/rclone/config/dropbox-sync.log
+/var/log/nas_dropbox_sync.log
 {
 	rotate 4
-	daily
+	weekly
 	missingok
 	notifempty
 	compress
 	delaycompress
-	create 0660 cyrus exthd
-	su cyrus exthd
+	create 0660 root root
+	sharedscripts
+	prerotate
+		if [ -e /var/run/nas_lock ]; then
+			exit 1
+		fi
+	endscript
 }

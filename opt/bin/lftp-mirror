@@ -1,9 +1,9 @@
 #!/bin/bash
 # lftp-mirror
-# --------------------------------
+#
 # Mirror script for lftp. It mirrors a remote directory to a local one via (S)FTP.
 #
-# It must be run passing a configuration file as parameter The file must contain the following variables:
+# It must be run passing a configuration file as parameter. The file must contain the following variables:
 #
 # USR  = Login username.
 # PWD  = Login password.
@@ -15,6 +15,7 @@
 # FENC = Encrypt ftp transfer. Optional, [yes|no] default no.
 # NCON = Number of parallel downloads. Optional, [number] default 1.
 # NSEG = Number of parallel segments. Optional, [number] default 3.
+#
 # --------------------------------
 # cyruz - http://ciroprincipe.info
 

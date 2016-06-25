@@ -7,99 +7,93 @@
 # --------------------------------
 # cyruz - http://ciroprincipe.info
 
-LOCK_FILE=/var/run/nas_backup
-LOG_FILE=/var/log/nas_backup.log
-LED_MNGR=/opt/thecus/nas_led
-BK_DISK_ID=/dev/disk/by-id/ata-WDC_WD40EFRX-68WT0N0_WD-WCC4E2UUVFRS
-BK_DISK_PART=/dev/disk/by-id/ata-WDC_WD40EFRX-68WT0N0_WD-WCC4E2UUVFRS-part1
+EGCTL_BIN=/usr/local/bin/egctl
+EGCTL_CMD_ON="eg1 left on left left"
+EGCTL_CMD_OFF="eg1 left off left left"
+BK_DISK_ID=/dev/disk/by-id/ata-ST8000AS0002-1NA17Z_Z840CM1R
+BK_DISK_PART_ID=/dev/disk/by-id/ata-ST8000AS0002-1NA17Z_Z840CM1R-part1
 BK_DISK_PART_FS=ext4
-BK_DISK_PART_MOUNT=/mnt/disk_2
+BK_DISK_PART_MOUNT=/mnt/disk_backup
 ST_DISK_PART_MOUNT=/mnt/disk_1
-PRE_SYNC_SCRIPT=/opt/thecus/nas_dropbox_sync
 
 # This is a cleanup function executed when catching the SIGTERM signal.
 exitgracefully() {
-	ERROR="nas_backup :: caught SIGTERM"
-	if [[ -n "$RSYNC_PID" ]]; then
-		kill -SIGINT $RSYNC_PID
-		ERROR=$ERROR" - rsync terminated"
+	ERRMSG="Caught SIGTERM"
+	if [[ -n "$WAIT_PID" ]]; then
+		kill -SIGINT $WAIT_PID
+		ERRMSG=$ERRMSG" - rsync terminated"
 	fi
 	if [[ $(cat /proc/mounts | grep "$BK_DISK_PART_MOUNT") ]]; then
-		umount $BK_DISK_PART
-		ERROR=$ERROR" - drive unmounted"
+		umount $BK_DISK_PART_ID
+		ERRMSG=$ERRMSG" - backup drive unmounted"
 	fi
 	if [[ $(smartctl -c $BK_DISK_ID | grep "Self-test routine in progress") ]]; then
-		smartctl -X $BK_DISK_ID
-		sleep 1s
-		ERROR=$ERROR" - SMART test aborted"
+		smartctl -X $BK_DISK_ID && sleep 1s
+		ERRMSG=$ERRMSG" - SMART test aborted"
 	fi
-	hdparm -Y $BK_DISK_ID
-	echo "$ERROR" >> "$LOG_FILE"
-	[[ -f /proc/thecus_io ]] && $LED_MNGR copy
-	rm -f $LOCK_FILE
+	hdparm -Y $BK_DISK_ID && sleep 10s && ERROR==$ERROR" - backup drive put to sleep"
+	if [[ -n "$EGCTL_BIN" && -n "$EGCTL_CMD_OFF" ]]; then
+		ERRMSG=$ERRMSG" - backup drive turned off"
+		$EGCTL_BIN $EGCTL_CMD_OFF 2>/dev/null
+	fi
+	write_log -t "$ERRMSG\n" && mail_notify "$HOSTNAME - NAS_BACKUP MESSAGE" "$ERRMSG"
+	toggle_led copy && remove_lock
+	write_log -t "Script terminated.\n"
 	exit 1
 }
 
-# Required tools check.
-for i in smartctl hdparm
-do
-	type $i >/dev/null 2>&1 || { echo "nas_backup :: $i not installed, aborting." >> "$LOG_FILE"; exit 1; }
-done
+# Import common functions.
+. "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/common/nas_common.sh" || exit 1
 
-# Check if the script is already running (maybe a sync is already going on).
-if [[ -f $LOCK_FILE ]]; then
-	echo "nas_backup :: script already running, exiting." >> "$LOG_FILE"
-	exit 1
-fi
+# Redirect all output to log file and write log.
+redirect_out && write_log -t "Script started.\n"
+
+# Checks...
+preliminary_check smartctl hdparm rsync
+running_check
 
 # Set trap on SIGTERM before starting operations.
 trap exitgracefully SIGTERM
+create_lock && toggle_led copy
 
-# Create lockfile with script's pid.
-echo $$ > $LOCK_FILE
-
-# Turn on the copy led, if ICH4_GPIO module is loaded.
-[[ -f /proc/thecus_io ]] && $LED_MNGR copy
+# Turn on the power socket if an Energenie power outlet is used.
+if [[ -n "$EGCTL_BIN" && -n "$EGCTL_CMD_ON" ]]; then
+	write_log -t "Turning on the backup disk...\n"
+	$EGCTL_BIN $EGCTL_CMD_ON 2>/dev/null
+	# Wait for the hard drive to be recognized by the kernel.
+	while [[ ! -e $BK_DISK_ID ]]; do sleep 1s; done
+fi
 
 # Start a SMART test (short everyday and long on saturday).
 # The smartd daemon must be set to notify in case of failure.
 [[ $(date +%a) == "Sat" ]] && TEST=long || TEST=short
-echo "nas_backup :: start $TEST SMART test on the backup drive..." >> "$LOG_FILE"
-smartctl -t $TEST $BK_DISK_ID
-sleep 1s
+write_log -t "Starting $TEST SMART test on the backup drive...\n"
+smartctl -t $TEST $BK_DISK_ID && sleep 1s
 
-echo "nas_backup :: waiting for the SMART test to terminate..." >> "$LOG_FILE"
+write_log -t "Waiting for the SMART test to terminate...\n"
 while [[ $(smartctl -c $BK_DISK_ID | grep "Self-test routine in progress") ]]; do
 	# Sleep in background and wait to trap signals.
 	sleep 5m & wait
 done
 
-if [[ -n "$PRE_SYNC_SCRIPT" ]]; then
-	echo "nas_backup :: running pre synchronization script..." >> "$LOG_FILE"
-	$PRE_SYNC_SCRIPT
-fi
-
-echo "nas_backup :: mounting backup partition and starting rsync job..." >> "$LOG_FILE"
-mount -t $BK_DISK_PART_FS $BK_DISK_PART $BK_DISK_PART_MOUNT
+write_log -t "Mounting backup partition and starting rsync job...\n"
+mount -t $BK_DISK_PART_FS $BK_DISK_PART_ID $BK_DISK_PART_MOUNT
 cd $ST_DISK_PART_MOUNT
 rsync -XAa --delete --exclude=lost+found --log-file=$LOG_FILE ./ $BK_DISK_PART_MOUNT &
-
-# We started rsync in background so we save its pid and wait to trap signals.
-RSYNC_PID=$!
+WAIT_PID=$! # Snapraid in background, wait to trap signals.
 wait
+WAIT_PID="" # Whiteout the variable.
 
-if [[ -n "$POST_SYNC_SCRIPT" ]]; then
-	echo "nas_backup :: running post synchronization script..." >> "$LOG_FILE"
-	$POST_SYNC_SCRIPT
+write_log -t "Unmounting backup partition and putting the drive to sleep...\n"
+umount $BK_DISK_PART_ID
+hdparm -Y $BK_DISK_ID && sleep 10s
+
+# Turn off the power socket if an Energenie power outlet is used.
+if [[ -n "$EGCTL_BIN" && -n "$EGCTL_CMD_OFF" ]]; then
+	write_log -t "Turning off the backup disk...\n"
+	$EGCTL_BIN $EGCTL_CMD_OFF 2>/dev/null
 fi
 
-echo "nas_backup :: unmounting backup partition and putting the drive to sleep..." >> "$LOG_FILE"
-umount $BK_DISK_PART
-hdparm -Y $BK_DISK_ID
-
-# Turn off the copy led, if ICH4_GPIO module is loaded.
-[[ -f /proc/thecus_io ]] && $LED_MNGR copy
-
-# Remove lockfile.
-rm -f $LOCK_FILE
-
+# Turn off copy led, remove lock file and write log.
+toggle_led copy && remove_lock
+write_log -t "Script ended.\n"
