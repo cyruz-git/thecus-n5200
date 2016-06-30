@@ -46,6 +46,20 @@ remove_lock() {
 	write_log "[OK]\n"
 }
 
+# Create the stop file.
+create_stop() {
+	write_log -t "Creating stop file... "
+	touch $STOP_FILE
+	write_log "[OK]\n"
+}
+
+# Remove the stop file.
+remove_stop() {
+	write_log -t "Removing stop file... "
+	rm -f $STOP_FILE
+	write_log "[OK]\n"
+}
+
 # Toggle led status.
 # Require 1 argument: led name.
 toggle_led() {

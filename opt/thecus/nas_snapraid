@@ -23,6 +23,19 @@ exitgracefully() {
 	exit 1
 }
 
+checkstatus() {
+	snapraid status > /tmp/snapraid.output &
+	WAIT_PID=$! # Snapraid in background, wait to trap signals.
+	wait
+	WAIT_PID="" # Whiteout the variable.
+	ERRMSG=$(cat /tmp/snapraid.output) && rm -f /tmp/snapraid.output
+	if [[ -z "$(echo $ERRMSG | grep 'No error detected')" ]]; then
+		write_log -t "Error found, check status:\n$ERRMSG\n" && mail_notify "$HOSTNAME - SNAPRAID ERROR" "$ERRMSG"
+		create_stop && remove_lock && toggle_led fail
+		exit 1
+	fi
+}
+
 # Import common functions.
 . "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/common/nas_common.sh" || exit 1
 
@@ -81,8 +94,8 @@ WAIT_PID=$! # Snapraid in background, wait to trap signals.
 wait
 WAIT_PID="" # Whiteout the variable.
 
-# TODO
-# Check snapraid sync result
+write_log -t "Checking snapraid status post sync...\n"
+check_status
 
 # Scrub if the script is run with the "scrub" parameter.
 if [[ -n "$DO_SCRUB" ]]; then
@@ -92,8 +105,8 @@ if [[ -n "$DO_SCRUB" ]]; then
 	wait
 	WAIT_PID="" # Whiteout the variable.
 
-	# TODO
-	# Check snapraid scrub result
+	write_log -t "Checking snapraid status post scrub...\n"
+	check_status
 fi
 
 # Turn off copy led, remove lock file and write log.

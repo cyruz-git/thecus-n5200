@@ -12,11 +12,11 @@ S3="/opt/thecus/nas_snapraid"
 S4="/opt/thecus/nas_snapraid scrub"
 
 # Weekdays script chains.
-MON="$S1; $S3"
-TUE="$S1; $S3"
-WED="$S2"
-THU="$S1; $S3"
-FRI="$S1; $S3"
+MON="$S1 $S3"
+TUE="$S1 $S3"
+WED="$S1 $S3"
+THU="$S1 $S3"
+FRI="$S1 $S3"
 SAT="$S2"
 SUN="$S4"
 
@@ -25,4 +25,6 @@ SUN="$S4"
 
 # Get current weekday and execute script chain using indirect expansion.
 DAY=$(date +%a | tr [:lower:] [:upper:])
-${!DAY}
+for i in ${!DAY}; do
+	$i
+done
