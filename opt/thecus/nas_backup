@@ -66,7 +66,8 @@ fi
 
 # Start a SMART test (short everyday and long on saturday).
 # The smartd daemon must be set to notify in case of failure.
-[[ $(date +%a) == "Sat" ]] && TEST=long || TEST=short
+#[[ $(date +%a) == "Sat" ]] && TEST=long || TEST=short
+TEST=short
 write_log -t "Starting $TEST SMART test on the backup drive...\n"
 smartctl -t $TEST $BK_DISK_ID && sleep 1s
 
