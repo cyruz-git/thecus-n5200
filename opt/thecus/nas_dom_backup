@@ -28,4 +28,4 @@ tar cpvzf "$DEST/rootfs_$(date +%Y-%m-%d).tar.gz" --exclude=/dev/* --exclude=/pr
 --exclude=/mnt/*/* --exclude=/media/*/* --exclude=lost+found /
 
 # Backup var filesystem.
-tar cpvzf "$DEST/varfs_$(date +%Y-%m-%d).tar.gz" -C /var .
+tar cpvzf "$DEST/varfs_$(date +%Y-%m-%d).tar.gz" --exclude=/var/snapraid* -C /var .
