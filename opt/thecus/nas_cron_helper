@@ -1,30 +1,36 @@
 #!/bin/bash
 # This script helps cron deciding the order of NAS related jobs.
 # It must be executed one time per day by crontab:
-# 0 4 * * * root /oopt/thecus/nas_cron_helper >/dev/null 2>&1
+# 0 4 * * * root /opt/thecus/nas_cron_helper >/dev/null 2>&1
 # --------------------------------
 # cyruz - http://ciroprincipe.info
 
 # Scripts.
-S1="/opt/thecus/nas_dropbox_sync"
-S2="/opt/thecus/nas_backup"
-S3="/opt/thecus/nas_snapraid"
-S4="/opt/thecus/nas_snapraid scrub"
+DBX="/opt/thecus/nas_dropbox_sync"
+BAK="/opt/thecus/nas_backup"
+SNR="/opt/thecus/nas_snapraid"
+SCR="/opt/thecus/nas_snapraid scrub"
 
 # Weekdays script chains.
-MON="$S1 $S3"
-TUE="$S1 $S3"
-WED="$S1 $S3"
-THU="$S1 $S3"
-FRI="$S1 $S3"
-SAT="$S2"
-SUN="$S4"
+MON="$DBX $SNR"
+TUE="$DBX $SNR"
+WED="$DBX $SNR"
+THU="$DBX $SNR"
+FRI="$DBX $SNR"
+SAT="$BAK"
+SUN="$SCR"
 
-# Check if running as root.
-[[ $(id -u) -ne 0 ]] && { echo "Please run this script as root."; exit 1; }
+# Import common functions.
+. "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/common/nas_common.sh" || exit 1
+
+# Checks...
+preliminary_check date tr
 
 # Get current weekday and execute script chain using indirect expansion.
 DAY=$(date +%a | tr [:lower:] [:upper:])
+redirect_out && write_log -t "Day: $DAY - Executing cron helper....\n" 
+
 for i in ${!DAY}; do
+	write_log -t "Running <$i>"
 	$i
 done
