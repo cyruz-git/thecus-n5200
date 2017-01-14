@@ -31,6 +31,6 @@ DAY=$(date +%a | tr [:lower:] [:upper:])
 redirect_out && write_log -t "Day: $DAY - Executing cron helper....\n" 
 
 for i in ${!DAY}; do
-	write_log -t "Running <$i>"
+	write_log -t "Running <$i>\n"
 	$i
 done
