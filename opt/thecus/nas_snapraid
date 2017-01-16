@@ -46,56 +46,63 @@ redirect_out && write_log -t "Script started.\n"
 for i in "$@"; do
 	case $i in
 		force) DO_FORCE=1 ;;
+		sync)  DO_SYNC=1  ;;
 		scrub) DO_SCRUB=1 ;;
-		*) { write_log -t "USAGE: nas_snapraid [force] [scrub]}\n"; exit 1; } ;;
+		*) { write_log -t "USAGE: nas_snapraid [sync] [scrub] [force]}\n"; exit 1; } ;;
 	esac
 done
+[[ -z "$DO_SYNC" && -z "$DO_SCRUB" ]] && { write_log -t "SYNC/SCRUB operation must be specified.\n"; exit 1; }
 
 # Checks...
 preliminary_check snapraid mail
 running_check
 
 # Check if snapraid is setup and if content and parity files are accessible.
+write_log -t "Check snapraid configuration... "
 for i in $(cat /etc/snapraid.conf | grep -E "snapraid.(content|parity)"  | cut -d " " -f2); do
 	if [[ ! -f $i ]]; then
 		ERRMSG="One or more content/parity files are not accessible."
-		write_log -t "$ERRMSG\n" && mail_notify "$HOSTNAME - SNAPRAID FAILURE" "$ERRMSG"
+		write_log "[NOT OK]\n" && write_log -t "$ERRMSG\n" && mail_notify "$HOSTNAME - SNAPRAID FAILURE" "$ERRMSG"
 		exit 1
 	fi
 done
+write_log "[OK]\n"
 
 # Set trap on SIGTERM, create lock and turn on copy led before starting operations.
 trap exitgracefully SIGTERM
 create_lock && toggle_led copy 
 
-# Check snapraid diff if forced sync is disabled.
-if [[ -z "$DO_FORCE" ]]; then
-	write_log -t "Checking snapraid diff...\n"
-	snapraid diff > /tmp/snapraid.output &
+write_log -t "Check snapraid status pre operation... "
+checkstatus && write_log "[OK]\n"
+
+# Sync if the script is run with the "sync" parameter.
+if [[ -n "$DO_SYNC" ]]; then
+	# Check snapraid diff if forced sync is disabled.
+	if [[ -z "$DO_FORCE" ]]; then
+		write_log -t "Checking snapraid diff...\n"
+		snapraid diff > /tmp/snapraid.output &
+		WAIT_PID=$! # Snapraid in background, wait to trap signals.
+		wait
+		WAIT_PID="" # Whiteout the variable. 
+		SNAPRAID_SUMMARY=$(cat /tmp/snapraid.output | grep -Po "[\d]+\s[a-z]+$")
+		rm -f /tmp/snapraid.output
+		write_log "\n~ SNAPRAID DIFF SUMMARY ~\n${SNAPRAID_SUMMARY}\n\n"
+
+		# Check deleted threshold.
+		if [[ $SNAPRAID_SUMMARY =~ ([0-9]+).removed ]] && [[ ${BASH_REMATCH[1]} -gt $SNAPRAID_DELETE_TRESHOLD ]]; then
+			ERRMSG="Delete treshold breached, snapraid sync will not start."
+			write_log -t "$ERRMSG\n" && mail_notify "$HOSTNAME - SNAPRAID MESSAGE" "$ERRMSG"
+			remove_lock && toggle_led copy
+			exit 1
+		fi
+	fi
+
+	write_log -t "Starting snapraid sync...\n"
+	snapraid sync --log ">>$LOG_FILE" &
 	WAIT_PID=$! # Snapraid in background, wait to trap signals.
 	wait
-	WAIT_PID="" # Whiteout the variable. 
-	SNAPRAID_SUMMARY=$(cat /tmp/snapraid.output | grep -Po "[\d]+\s[a-z]+$")
-	rm -f /tmp/snapraid.output
-	write_log "\n~ SNAPRAID DIFF SUMMARY ~\n${SNAPRAID_SUMMARY}\n\n"
-
-	# Check deleted threshold.
-	if [[ $SNAPRAID_SUMMARY =~ ([0-9]+).removed ]] && [[ ${BASH_REMATCH[1]} -gt $SNAPRAID_DELETE_TRESHOLD ]]; then
-		ERRMSG="Delete treshold breached, snapraid sync will not be started."
-		write_log -t "$ERRMSG\n" && mail_notify "$HOSTNAME - SNAPRAID MESSAGE" "$ERRMSG"
-		remove_lock && toggle_led copy
-		exit 1
-	fi
+	WAIT_PID="" # Whiteout the variable.
 fi
-
-write_log -t "Starting snapraid sync...\n"
-snapraid sync --log ">>$LOG_FILE" &
-WAIT_PID=$! # Snapraid in background, wait to trap signals.
-wait
-WAIT_PID="" # Whiteout the variable.
-
-write_log -t "Checking snapraid status post sync...\n"
-checkstatus
 
 # Scrub if the script is run with the "scrub" parameter.
 if [[ -n "$DO_SCRUB" ]]; then
@@ -104,10 +111,10 @@ if [[ -n "$DO_SCRUB" ]]; then
 	WAIT_PID=$! # Snapraid in background, wait to trap signals.
 	wait
 	WAIT_PID="" # Whiteout the variable.
-
-	write_log -t "Checking snapraid status post scrub...\n"
-	checkstatus
 fi
+
+write_log -t "Check snapraid status post operation... "
+checkstatus && write_log "[OK]\n"
 
 # Turn off copy led, remove lock file and write log.
 toggle_led copy && remove_lock
