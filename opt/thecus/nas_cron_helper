@@ -8,15 +8,15 @@
 # Scripts.
 DBX="/opt/thecus/nas_dropbox_sync"
 BAK="/opt/thecus/nas_backup"
-SNR="/opt/thecus/nas_snapraid"
+SNR="/opt/thecus/nas_snapraid sync"
 SCR="/opt/thecus/nas_snapraid scrub"
 
 # Weekdays script chains.
-MON="$DBX $SNR"
-TUE="$DBX $SNR"
-WED="$DBX $SNR"
-THU="$DBX $SNR"
-FRI="$DBX $SNR"
+MON="$DBX;$SNR"
+TUE="$DBX;$SNR"
+WED="$DBX;$SNR"
+THU="$DBX;$SNR"
+FRI="$DBX;$SNR"
 SAT="$BAK"
 SUN="$SCR"
 
@@ -30,7 +30,8 @@ preliminary_check date tr
 DAY=$(date +%a | tr [:lower:] [:upper:])
 redirect_out && write_log -t "Day: $DAY - Executing cron helper....\n" 
 
+IFS=";" # Use ; as field separator.
 for i in ${!DAY}; do
 	write_log -t "Running <$i>\n"
-	$i
+	sh -c "$i"
 done
