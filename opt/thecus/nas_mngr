@@ -14,7 +14,7 @@
 preliminary_check
 [[ ! -e /proc/thecus_io ]] && { logger -s "ICH4_GPIO module not installed, aborting..."; exit 1; }
 
-$LCD_MNGR "CYRUS STORAGE BOX"
+$LCD_MNGR "CYNAS STORAGE BOX"
 
 while true; do
 	EVENT=$(cat /proc/thecus_event)
