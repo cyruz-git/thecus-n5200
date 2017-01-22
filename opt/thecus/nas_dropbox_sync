@@ -44,11 +44,11 @@ trap exitgracefully SIGTERM
 create_lock && toggle_led copy
 
 # Change log file owner temporarily.
-write_log -t "Changing log owner...\n"
+write_log -t "Change log owner...\n"
 chown $RCLONE_USER:root $LOG_FILE
 
 # Synchronize Dropbox to the download hard drive.
-write_log -t "Synchronize remote DropBox to local...\n"
+write_log -t "Synchronize remote Dropbox to local...\n"
 su $RCLONE_USER -s /bin/sh -c \
   "$RCLONE_BIN --config=$RCLONE_CONFIG --log-file=$LOG_FILE sync $RCLONE_REMOTE $RCLONE_LOCAL &"
 WAIT_PID=$(pidof rclone) # Rclone in background, wait to trap signals.
@@ -56,11 +56,11 @@ while [[ -e /proc/$WAIT_PID ]]; do sleep 1s; done # Wait a non-child process wit
 WAIT_PID="" # Whiteout the variable.
 
 # Restore log file owner.
-write_log -t "Restoring log owner...\n"
+write_log -t "Restore log owner...\n"
 chown root:root $LOG_FILE
 
 # Synchronize Dropbox directories to the storage hard drive.
-write_log -t "Synchronize DropBox content to the storage hard drive...\n"
+write_log -t "Synchronize Dropbox content to the storage hard drive...\n"
 for i in $DROPBOX_SUBDIR; do
 	rsync -XAa --delete --log-file=$LOG_FILE $DROPBOX_SOURCE/$i/ $DROPBOX_DESTIN/$i/ &
 	WAIT_PID=$! # Rsync in background, wait to trap signals.
