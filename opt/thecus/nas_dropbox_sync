@@ -60,7 +60,7 @@ write_log -t "Restoring log owner...\n"
 chown root:root $LOG_FILE
 
 # Synchronize Dropbox directories to the storage hard drive.
-write_log -t "Synchronizing DropBox content to the storage hard drive...\n"
+write_log -t "Synchronize DropBox content to the storage hard drive...\n"
 for i in $DROPBOX_SUBDIR; do
 	rsync -XAa --delete --log-file=$LOG_FILE $DROPBOX_SOURCE/$i/ $DROPBOX_DESTIN/$i/ &
 	WAIT_PID=$! # Rsync in background, wait to trap signals.

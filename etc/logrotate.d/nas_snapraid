@@ -1,7 +1,7 @@
 /var/log/nas_snapraid.log
 {
 	rotate 4
-	weekly
+	daily
 	missingok
 	notifempty
 	compress

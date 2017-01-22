@@ -1,12 +1,12 @@
 /var/log/nas_dropbox_sync.log
 {
 	rotate 4
-	weekly
+	daily
 	missingok
 	notifempty
 	compress
 	delaycompress
-	create 0660 root root
+	create 0644 root root
 	sharedscripts
 	prerotate
 		if [ -e /var/run/nas_lock ]; then
