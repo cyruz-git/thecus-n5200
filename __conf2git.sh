@@ -25,9 +25,7 @@ SOURCEFILES="
 /etc/init.d/syncthing
 /etc/lilo.conf
 /etc/logrotate.d/freedns-updater
-/etc/logrotate.d/nas_backup
-/etc/logrotate.d/nas_dropbox_sync
-/etc/logrotate.d/nas_snapraid
+/etc/logrotate.d/nas_*
 /etc/mailname
 /etc/mathopd.conf
 /etc/minidlna.conf
